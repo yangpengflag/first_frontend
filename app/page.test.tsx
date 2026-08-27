@@ -18,3 +18,24 @@ describe("Home page (integration with Hero via HomepageLayout)", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("Home page region slots (homepage-shell)", () => {
+  it("renders 5 regions in document order", () => {
+    const { container } = render(<Home />);
+    const regions = Array.from(
+      container.querySelectorAll("[data-region]")
+    ).map((el) => el.getAttribute("data-region"));
+    expect(regions).toEqual([
+      "hero",
+      "feature-nav",
+      "city-grid",
+      "hot-posts",
+      "hot-spots",
+    ]);
+  });
+
+  it("does not render ai-launcher region in page", () => {
+    const { container } = render(<Home />);
+    expect(container.querySelector('[data-region="ai-launcher"]')).toBeNull();
+  });
+});
