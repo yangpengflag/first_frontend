@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  /* 品牌色（等价于 blue-700） */
+  --color-brand: #1d4ed8;
+  /* Section 间距（desktop / mobile） */
+  --spacing-section: 96px;
+  --spacing-section-mobile: 64px;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a; /* slate-900 */
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* 标题字体：Plus Jakarta Sans 自动应用于 h1–h6 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
