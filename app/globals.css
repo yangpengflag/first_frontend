@@ -6,16 +6,32 @@
   /* Section 间距（desktop / mobile） */
   --spacing-section: 96px;
   --spacing-section-mobile: 64px;
+
+  /* shadcn 设计 token 映射（供 ring-ring / bg-background / text-foreground / border-border 等工具类） */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a; /* slate-900 */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.208 0.042 265.755); /* slate-900 */
+  --border: oklch(0.922 0 0); /* slate-200 */
+  --ring: #1d4ed8; /* brand blue-700 */
+  --primary: #1d4ed8;
+  --primary-foreground: oklch(1 0 0);
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --border: oklch(0.3 0 0);
+  --ring: #1d4ed8;
+  --primary: #1d4ed8;
+  --primary-foreground: oklch(1 0 0);
 }
 
 body {
