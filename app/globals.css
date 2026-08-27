@@ -45,6 +45,17 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), system-ui, sans-serif;
 }
 
+/* 首页内容区域垂直节奏：由全局 token 驱动，移动端间隙更小 */
+section[data-region] {
+  padding-block: var(--spacing-section-mobile);
+}
+
+@media (min-width: 1024px) {
+  section[data-region] {
+    padding-block: var(--spacing-section);
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
