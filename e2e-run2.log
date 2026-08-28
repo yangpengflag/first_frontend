@@ -1,0 +1,20 @@
+
+Running 14 tests using 4 workers
+
+  -   3 [desktop] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠
+  ok  4 [desktop] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向 (5.9s)
+  ok  1 [desktop] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 (6.7s)
+  ok  2 [desktop] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 (11.4s)
+  ok  7 [desktop] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 (5.2s)
+  ok  6 [desktop] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 (5.5s)
+  ok  5 [desktop] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） (5.8s)
+  -  11 [mobile] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向
+  ok 10 [mobile] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠 (8.4s)
+  ok  8 [mobile] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 (9.1s)
+  ok  9 [mobile] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 (10.5s)
+  ok 12 [mobile] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） (4.2s)
+  ok 14 [mobile] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 (3.6s)
+  ok 13 [mobile] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 (4.0s)
+
+  2 skipped
+  12 passed (1.0m)

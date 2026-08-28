@@ -1,0 +1,127 @@
+
+Running 14 tests using 4 workers
+
+  -   3 [desktop] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠
+  ok  2 [desktop] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向 (7.4s)
+  ok  1 [desktop] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 (7.6s)
+  ok  4 [desktop] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 (10.5s)
+  ok  7 [desktop] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 (3.3s)
+  ok  5 [desktop] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） (3.7s)
+  ok  6 [desktop] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 (3.6s)
+  x   8 [mobile] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 (7ms)
+  x   9 [mobile] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠 (8ms)
+  x  10 [mobile] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 (5ms)
+  x  11 [mobile] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向 (4ms)
+  x  12 [mobile] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） (9ms)
+  x  13 [mobile] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 (4ms)
+  x  14 [mobile] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 (4ms)
+
+
+  1) [mobile] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 ─────────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S1-首屏渲染品牌标语、副标题、搜索框与全幅背景图-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S1-首屏渲染品牌标语、副标题、搜索框与全幅背景图-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S1-首屏渲染品牌标语、副标题、搜索框与全幅背景图-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [mobile] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 ────────────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S2-背景图加载失败显示兜底底色且文字仍可读-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S2-背景图加载失败显示兜底底色且文字仍可读-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S2-背景图加载失败显示兜底底色且文字仍可读-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [mobile] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠 ──────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S3-移动端文字居中、标题-text-5xl、搜索框堆叠-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S3-移动端文字居中、标题-text-5xl、搜索框堆叠-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S3-移动端文字居中、标题-text-5xl、搜索框堆叠-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [mobile] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向 ─────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S4-桌面端文字左对齐、标题-text-6xl、搜索框横向-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S4-桌面端文字左对齐、标题-text-6xl、搜索框横向-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S4-桌面端文字左对齐、标题-text-6xl、搜索框横向-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [mobile] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） ───────────────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S5-非空提交后输入值保留（受控组件）-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S5-非空提交后输入值保留（受控组件）-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S5-非空提交后输入值保留（受控组件）-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [mobile] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 ─────────────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S6-空查询提交不触发、按钮可用、提示可见-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S6-空查询提交不触发、按钮可用、提示可见-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S6-空查询提交不触发、按钮可用、提示可见-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [mobile] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 ─────────────────────
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results\homepage-hero--S7-搜索输入可聚焦、按钮具备可访问名称-mobile\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\homepage-hero--S7-搜索输入可聚焦、按钮具备可访问名称-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\homepage-hero--S7-搜索输入可聚焦、按钮具备可访问名称-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7 failed
+    [mobile] › tests\e2e\homepage-hero.spec.ts:15:5 › [S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图 ──────────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:41:5 › [S2] 背景图加载失败显示兜底底色且文字仍可读 ─────────────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:58:5 › [S3] 移动端文字居中、标题 text-5xl、搜索框堆叠 ───────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:73:5 › [S4] 桌面端文字左对齐、标题 text-6xl、搜索框横向 ──────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:85:5 › [S5] 非空提交后输入值保留（受控组件） ────────────────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:98:5 › [S6] 空查询提交不触发、按钮可用、提示可见 ──────────────────────
+    [mobile] › tests\e2e\homepage-hero.spec.ts:113:5 › [S7] 搜索输入可聚焦、按钮具备可访问名称 ──────────────────────
+  1 skipped
+  6 passed (1.0m)

@@ -22,11 +22,21 @@ export default defineConfig({
   projects: [
     {
       name: "desktop",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 } },
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome",
+        viewport: { width: 1280, height: 720 },
+      },
     },
     {
       name: "mobile",
-      use: { ...devices["iPhone 12"], viewport: { width: 375, height: 667 } },
+      use: {
+        ...devices["Pixel 5"],
+        channel: "chrome",
+        viewport: { width: 375, height: 667 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
   ],
 });
