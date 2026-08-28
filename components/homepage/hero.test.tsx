@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { Hero } from "./hero";
@@ -55,6 +55,17 @@ describe("Hero", () => {
     const { container } = render(<Hero backgroundImageUrl={BG} onSearch={vi.fn()} />);
     // 外层容器含兜底底色 bg-slate-800
     const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain("bg-slate-800");
+  });
+
+  it("keeps the dark fallback background when the hero image fails to load", () => {
+    const { container } = render(<Hero backgroundImageUrl={BG} onSearch={vi.fn()} />);
+    const img = container.querySelector("img");
+    expect(img).toBeInTheDocument();
+    // 模拟背景图 404 / 网络失败
+    fireEvent.error(img!);
+    const root = container.firstElementChild as HTMLElement;
+    // 兜底底色仍生效，无白块
     expect(root.className).toContain("bg-slate-800");
   });
 });

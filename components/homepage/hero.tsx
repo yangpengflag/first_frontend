@@ -86,7 +86,7 @@ export function Hero({
       />
 
       {/* 内容层 */}
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 text-center md:px-8 md:text-left">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 text-center md:mx-0 md:px-8 md:text-left">
         <h1 className="text-5xl font-bold text-white lg:text-6xl">
           {headline}
         </h1>
