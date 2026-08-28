@@ -29,6 +29,12 @@ test("[S1] 首屏渲染品牌标语、副标题、搜索框与全幅背景图", 
   await expect(heroSection).toHaveClass(/lg:min-h-screen/);
   await expect(page.locator('section[data-region="hero"] img')).toBeVisible();
   await expect(page.locator(".bg-gradient-to-r")).toBeVisible();
+
+  // 无障碍：装饰性背景图 aria-hidden + 搜索框 label 关联（Spec §4）
+  await expect(
+    page.locator('section[data-region="hero"] img[aria-hidden="true"]')
+  ).toBeVisible();
+  await expect(page.locator('label[for="hero-search"]')).toBeVisible();
 });
 
 // [S2] WHEN 背景图加载失败 THEN 显示 bg-slate-800 深色兜底且文字仍可读
