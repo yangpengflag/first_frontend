@@ -49,3 +49,51 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 | `ai-launcher` | `app/regions/AiLauncherSlot.tsx` | `app/layout.tsx` `{children}` 之后 | 空占位（homepage-ai-launcher） |
 
 各区块的具体内容、样式与数据由对应的 `homepage-*` change 实现；`homepage-shell` 仅定义结构骨架与挂载契约。
+
+## 认证（auth-frontend）
+
+规格见 `openspec/changes/0005-auth-frontend/`，后端契约见 `openspec/specs/auth-module/spec.md`。
+
+### 页面路由
+
+| 路由 | 组件 | 说明 |
+|---|---|---|
+| `/login` | `components/auth/login-form.tsx` | 登录；未验证邮箱时内联「重发验证邮件」出口 |
+| `/register` | `components/auth/register-form.tsx` | 注册；成功后引导查收验证邮件（不自动登录） |
+| `/forgot-password` | `components/auth/forgot-password-form.tsx` | 申请重置链接；恒定成功态 |
+| `/auth/verify` | `components/auth/verify-status.tsx` | 邮箱验证结果（免鉴权） |
+| `/auth/reset-password` | `components/auth/reset-password-form.tsx` | 凭一次性码设置新密码（免鉴权） |
+
+受保护页面用 `<AuthGuard>` 包裹；登录类页面用 `<RedirectIfAuthenticated>` 包裹。
+
+### 技术选型
+
+| 关注点 | 方案 |
+|---|---|
+| 表单 | `react-hook-form` + `zod`，schema 位于 `lib/auth/schemas.ts`，与后端注解逐字段对齐 |
+| 请求 | `lib/auth/client.ts`（注入 Bearer、遇 401 静默续期并重放、解析统一错误信封） |
+| Token 存储 | `localStorage`（键名 `wanderchina.accessToken` / `wanderchina.refreshToken`） |
+| 错误分支 | 按 `error.code` 分支，文案见 `lib/auth/messages.ts` |
+
+### Token 存储为何用 localStorage
+
+后端是 Bearer 设计，前端 JS 必须能取到令牌，因此无法使用 httpOnly Cookie。已知代价：
+
+- XSS 场景下令牌可被窃取（缓解：React 默认转义，禁用 `dangerouslySetInnerHTML`）
+- Next.js middleware（Edge Runtime）读不到 localStorage，故路由保护只能在客户端组件内实现
+
+若后续提升到 BFF 代理 + httpOnly Cookie，需后端改为从 Cookie 读取令牌。
+
+### 环境配置
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080` | 后端地址 |
+
+> 后端必须配置 CORS 放行本前端来源（`app.cors.allowed-origins`），否则浏览器会拦截全部请求。
+
+### 已知限制
+
+- 邮件仅写日志、不真实投递，故自动化无法走完「点击邮件链接」这一步；E2E 覆盖到验证之前为止
+- 注册限流为 5 次 / IP / 小时，E2E 在 desktop 与 mobile 两个 project 下各跑一遍易触发，相关用例会显式跳过
+- 登出为客户端丢弃令牌，服务端不维护黑名单；access token 在 15 分钟内仍有效（状态过滤已覆盖锁定 / 注销场景）
