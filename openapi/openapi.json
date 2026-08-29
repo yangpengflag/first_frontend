@@ -1,0 +1,588 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "健康检查",
+      "description": "服务可用性探针"
+    },
+    {
+      "name": "认证",
+      "description": "注册 / 登录 / 邮箱验证 / 密码重置 / 会话维持。\n所有错误响应使用统一信封 {\"error\":{\"code\":...,\"message\":...,\"details\":...}}，\n前端一律基于 error.code 分支而非 HTTP 状态码。"
+    }
+  ],
+  "paths": {
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "重置密码（免鉴权）",
+        "description": "凭邮件中的一次性重置码设置新密码。\n重置成功会把未验证邮箱一并置为 ACTIVE，并使密码变更前签发的令牌全部失效。",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "重置成功；重置码用后即焚，failedAttempts 归零"
+          },
+          "400": {
+            "description": "INVALID_RESET_CODE（无效 / 已过期 / 已使用，三态同码）或 VALIDATION_FAILED（密码不在 8–72 字符）"
+          },
+          "429": {
+            "description": "RATE_LIMITED：重置尝试过于频繁"
+          }
+        }
+      }
+    },
+    "/api/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "重发验证邮件（免鉴权）",
+        "description": "恒定返回 202：无论邮箱是否存在或是否已验证，均返回同一结果，不泄露账号存在性。\n仅当邮箱存在且状态为 EMAIL_UNVERIFIED 时才实际投递邮件。",
+        "operationId": "resendVerification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "已受理（恒定成功，不透露邮箱是否已注册）"
+          },
+          "400": {
+            "description": "VALIDATION_FAILED：邮箱格式非法"
+          },
+          "429": {
+            "description": "RATE_LIMITED：重发过于频繁"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "注册",
+        "description": "以 EMAIL_UNVERIFIED 状态创建用户，**不签发任何令牌**，需先完成邮箱验证方可登录。",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "注册成功，响应体 user.status 为 EMAIL_UNVERIFIED 且不含任何令牌",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED：邮箱格式非法或密码不在 8–72 字符区间",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "EMAIL_ALREADY_REGISTERED：邮箱已注册（含已注销账号，邮箱不可复用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED：同一 IP 注册过于频繁",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "刷新 access token",
+        "description": "以 refresh token 换取新签发的 access / refresh 令牌。",
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "已签发新的 access / refresh 令牌",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "TOKEN_INVALIDATED（令牌早于密码变更）/ ACCOUNT_DELETED（账号已注销）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "ACCOUNT_LOCKED：账号已锁定",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "登出",
+        "description": "JWT 无状态，服务端不维护令牌黑名单；客户端须丢弃本地 access / refresh 令牌。",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "登出成功"
+          },
+          "401": {
+            "description": "UNAUTHENTICATED：未携带有效令牌"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "登录",
+        "description": "按用户**当前**状态返回精确响应码：\nACTIVE→200、LOCKED→423、DELETED→401、EMAIL_UNVERIFIED→403。\n邮箱不存在与密码错误共用 401 INVALID_CREDENTIALS，以收窄账号枚举面。",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功，签发 access / refresh 令牌",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "INVALID_CREDENTIALS（邮箱不存在或密码错误）/ ACCOUNT_DELETED（账号已注销）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "EMAIL_NOT_VERIFIED：邮箱未验证，前端须提供重发验证邮件的出路",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "ACCOUNT_LOCKED：账号已锁定，响应含 retryAfterSeconds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED：登录尝试过于频繁（IP 与 IP+email 双维度计数）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "申请密码重置（免鉴权）",
+        "description": "恒定返回 202：无论邮箱是否存在、是否已注销都返回同一结果，不泄露账号存在性。\n仅当邮箱存在且状态非 DELETED 时才实际投递重置邮件。",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "已受理（恒定成功，响应体为固定文案）"
+          },
+          "400": {
+            "description": "VALIDATION_FAILED：邮箱格式非法"
+          },
+          "429": {
+            "description": "RATE_LIMITED：申请过于频繁"
+          }
+        }
+      }
+    },
+    "/api/hello": {
+      "get": {
+        "tags": [
+          "健康检查"
+        ],
+        "summary": "健康检查",
+        "description": "返回固定文案，用于确认后端进程存活。",
+        "operationId": "hello",
+        "responses": {
+          "200": {
+            "description": "服务正常",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify": {
+      "get": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "邮箱验证（免鉴权）",
+        "description": "凭邮件链接中的一次性验证码激活账号，**无需登录**。\n这是破解「登录返回 403 但验证邮件需登录态」死锁的关键端点。",
+        "operationId": "verify",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "验证成功，用户状态转为 ACTIVE，验证码用后即焚",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_VERIFICATION_CODE：验证码无效 / 已过期 / 已使用（三态同码，不泄露具体原因）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "当前用户信息",
+        "description": "返回当前登录用户信息，同时用于校验本地令牌是否仍有效。\n反映用户**当前**状态而非仅令牌签名有效性——登录后被锁定或注销会即时生效。",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "返回当前用户信息（不含任何凭证类字段）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED / ACCOUNT_DELETED / TOKEN_INVALIDATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "ACCOUNT_LOCKED：账号已锁定",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "认证"
+        ],
+        "summary": "注销账号（软删除）",
+        "description": "执行软删除：用户行保留，状态置为 DELETED 并写入 deletedAt。\n邮箱不可重新注册；已有业务数据（攻略、评论等）不物理删除。",
+        "operationId": "deleteMe",
+        "responses": {
+          "204": {
+            "description": "注销成功"
+          },
+          "401": {
+            "description": "UNAUTHENTICATED：未携带有效令牌"
+          },
+          "423": {
+            "description": "ACCOUNT_LOCKED：账号已锁定"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
+            "maxLength": 72,
+            "minLength": 8
+          }
+        },
+        "required": [
+          "code",
+          "newPassword"
+        ]
+      },
+      "ResendVerificationRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 72,
+            "minLength": 8
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "displayName",
+          "email",
+          "password"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email"
+        ]
+      }
+    }
+  }
+}

@@ -13,7 +13,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "openapi:sync": "node scripts/sync-openapi.mjs",
+    "openapi:gen": "openapi-typescript ./openapi/openapi.json -o ./lib/api.generated.ts",
+    "openapi:drift": "node scripts/sync-openapi.mjs --check"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -44,6 +47,8 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "jsdom": "^25.0.1",
+    "msw": "^2.15.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
     "typescript": "^5",

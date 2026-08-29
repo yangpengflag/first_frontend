@@ -4,24 +4,39 @@
  * 与后端 `auth-module` 契约一一对应：
  * - 用户状态四态与响应码映射见 openspec/specs/auth-module/spec.md
  * - 错误信封形如 { error: { code, message, details } }
+ *
+ * <p>DTO 一律由 openapi.json 生成物派生，不再手写重复定义
+ * （生成物由 `npm run openapi:gen` 产出，禁止手改）——
+ * 后端契约的破坏性变更会在编译期暴露，而非等到运行时。
  */
+
+import type { components } from "../api.generated";
+
+type GeneratedUser = components["schemas"]["UserResponse"];
+type GeneratedTokens = components["schemas"]["AuthTokenResponse"];
 
 export type UserStatus = "ACTIVE" | "LOCKED" | "DELETED" | "EMAIL_UNVERIFIED";
 
-export interface UserResponse {
-  id: string;
-  email: string;
-  displayName: string;
-  avatarUrl: string | null;
+/**
+ * 生成类型把全部字段标为可选（后端 DTO 未标注 required）。
+ * 此处仅对「成功响应必然包含」的关键字段做收紧；
+ * 字段集合本身仍由契约派生——后端增删或改名字段，
+ * 会在此处与下游同时编译报错，不会静默漂移。
+ */
+export type UserResponse = Omit<GeneratedUser, "status" | "avatarUrl"> & {
   status: UserStatus;
-  createdAt: string;
-}
+  /** 后端未设置头像时返回 null（生成类型仅标为 string，此处还原可空语义）。 */
+  avatarUrl: string | null;
+};
 
-export interface AuthTokenResponse {
+export type AuthTokenResponse = Omit<
+    GeneratedTokens,
+    "user" | "accessToken" | "refreshToken"
+> & {
   accessToken: string;
   refreshToken: string;
   user: UserResponse;
-}
+};
 
 export type ErrorCode =
   | "VALIDATION_FAILED"

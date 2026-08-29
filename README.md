@@ -156,3 +156,74 @@ $env:AUTH_MAIL_LOG_VERIFICATION_CODE = "true"   # 对应后端 auth.mail.log-ver
 
 > 完整的「注册→验证→登录」链路由后端 `AuthFlowIntegrationTest` 以真实 HTTP 覆盖，
 > 不再依赖人工点击邮件链接；前端 E2E 主要覆盖页面状态分支。
+
+## OpenAPI 集成（openapi-integration）
+
+后端以 `springdoc` 产出 OpenAPI 3 契约；前端从**进仓快照**生成类型，并驱动单测 mock。
+规格见 `openspec/changes/openapi-integration/`。
+
+```
+后端 Java 注解 ──springdoc──▶ /v3/api-docs
+                                   │ npm run openapi:sync
+                                   ▼
+                    frontend/openapi/openapi.json（进仓）
+                                   │
+              ┌────────────────────┴────────────────────┐
+              ▼                                         ▼
+   npm run openapi:gen                          msw handlers（单测）
+   → lib/api.generated.ts                       test/mocks/handlers.ts
+              │
+              ▼
+        lib/backend.ts（BFF 薄类型层）
+```
+
+### 脚本
+
+| 命令 | 作用 |
+|---|---|
+| `npm run openapi:sync` | 从运行中的后端重新导出契约快照（后端须先起在 `BACKEND_URL`，默认 `http://localhost:8080`） |
+| `npm run openapi:gen` | 由快照生成 `lib/api.generated.ts`（**生成物，禁止手改**） |
+| `npm run openapi:drift` | 只比对不写入：后端契约与进仓快照不一致即 exit 1 |
+
+### 后端接口变更时的流程
+
+1. 改后端 Controller / DTO
+2. 启动后端，执行 `npm run openapi:sync`
+3. 执行 `npm run openapi:gen`
+4. `npm run type-check` —— 破坏性变更会在此暴露
+5. 把 `frontend/openapi/openapi.json` 与 `lib/api.generated.ts` 一并提交
+
+> 后端 Controller 必须显式声明 `produces = MediaType.APPLICATION_JSON_VALUE`，
+> 否则 springdoc 会把响应 content type 推断为通配符，导致契约不精确、消费方无法正确解析。
+
+### 在 CI 中接入 drift check
+
+本仓库尚未引入 CI（无 `.github/workflows`）。接入时在流水线中：
+
+```bash
+# 1) 启动后端（按实际方式调整）
+# 2) 校验契约新鲜度 —— 后端改了但快照没刷即红灯
+npm run openapi:drift
+# 3) 结构破坏性变更编译期拦截
+npm run openapi:gen && npm run type-check
+```
+
+三层保障的分工：
+
+| 层 | 手段 | 说明 |
+|---|---|---|
+| 行为正确性 | 后端 `AuthFlowIntegrationTest` | 真实 HTTP 覆盖四态与正反路径（已有） |
+| 快照新鲜度 | `npm run openapi:drift` | 确定性内容比对，零误报 |
+| 结构破坏性变更 | `openapi:gen` + `type-check` | 编译期红灯 |
+
+### 单测 mock（MSW）
+
+`test/mocks/handlers.ts` 按用户状态机四态与限流提供响应，生命周期由 `vitest.setup.ts` 托管，
+`onUnhandledRequest: "error"` 保证未 mock 的端点不会被静默放行——单测与组件测**无需后端起服**。
+
+### 已知取舍
+
+- **不使用 Prism 做 e2e mock**：实测其无法消费本契约（响应 content type 协商失败，返回 406/500）；
+  且作为无状态成功样例 mock，它无法产出前端依赖的错误分支（401/403/423/429）。
+  这些分支已由 MSW 在单测层覆盖，真实后端 E2E 提供端到端保真度。
+- Swagger UI 仅在非 `prod` profile 启用；`prod` 下 `/v3/api-docs` 与 `/swagger-ui/**` 返回 404。
