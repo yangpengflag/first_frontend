@@ -2,26 +2,47 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { tokenStore } from "@/lib/auth/tokens";
+import { AuthSessionProvider } from "@/lib/auth/session";
 
 import { AuthGuard, RedirectIfAuthenticated } from "./auth-guard";
 
-const replace = vi.fn();
-let pathname = "/profile";
+const { me, logout, replace, getPathname } = vi.hoisted(() => ({
+  me: vi.fn(),
+  logout: vi.fn(),
+  replace: vi.fn(),
+  getPathname: () => "/profile",
+}));
+
+vi.mock("@/lib/auth/api", () => ({
+  authApi: { me, logout },
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
-  usePathname: () => pathname,
+  usePathname: () => getPathname(),
 }));
+
+const user = {
+  id: "u-1",
+  email: "a@b.com",
+  displayName: "Tester",
+  avatarUrl: null,
+  status: "ACTIVE",
+  createdAt: "2026-01-01T00:00:00Z",
+};
+
+function renderWithProvider(node: React.ReactNode) {
+  return render(<AuthSessionProvider>{node}</AuthSessionProvider>);
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
   tokenStore.clear();
-  pathname = "/profile";
 });
 
-describe("AuthGuard", () => {
-  it("redirects to login with a redirect hint when unauthenticated", async () => {
-    render(
+describe("AuthGuard (me 驱动)", () => {
+  it("2.1 未登录 → 跳 /login?redirect=<path>", async () => {
+    renderWithProvider(
       <AuthGuard>
         <div>受保护内容</div>
       </AuthGuard>
@@ -33,10 +54,11 @@ describe("AuthGuard", () => {
     expect(screen.queryByText("受保护内容")).not.toBeInTheDocument();
   });
 
-  it("renders children when a token is present", async () => {
+  it("2.1 已登录 → 渲染 children", async () => {
     tokenStore.set("access-1", "refresh-1");
+    me.mockResolvedValue(user);
 
-    render(
+    renderWithProvider(
       <AuthGuard>
         <div>受保护内容</div>
       </AuthGuard>
@@ -46,24 +68,26 @@ describe("AuthGuard", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  /** 校验完成前不渲染，避免内容一闪而过。 */
-  it("renders nothing until the check completes", () => {
-    render(
+  it("2.1 校验中（loading）→ 不渲染受保护内容", () => {
+    tokenStore.set("access-1", "refresh-1");
+    me.mockReturnValue(new Promise(() => {})); // 永挂起，模拟校验中
+
+    renderWithProvider(
       <AuthGuard>
         <div>受保护内容</div>
       </AuthGuard>
     );
 
-    // 首帧（effect 尚未执行）不应出现受保护内容
     expect(screen.queryByText("受保护内容")).not.toBeInTheDocument();
   });
 });
 
-describe("RedirectIfAuthenticated", () => {
-  it("sends an authenticated user to the home page", async () => {
+describe("RedirectIfAuthenticated (me 驱动)", () => {
+  it("2.4 已登录 → 跳首页", async () => {
     tokenStore.set("access-1", "refresh-1");
+    me.mockResolvedValue(user);
 
-    render(
+    renderWithProvider(
       <RedirectIfAuthenticated>
         <div>登录表单</div>
       </RedirectIfAuthenticated>
@@ -75,8 +99,8 @@ describe("RedirectIfAuthenticated", () => {
     expect(screen.queryByText("登录表单")).not.toBeInTheDocument();
   });
 
-  it("renders children for an anonymous visitor", async () => {
-    render(
+  it("2.4 未登录 → 渲染 children", async () => {
+    renderWithProvider(
       <RedirectIfAuthenticated>
         <div>登录表单</div>
       </RedirectIfAuthenticated>

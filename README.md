@@ -97,3 +97,62 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - 邮件仅写日志、不真实投递，故自动化无法走完「点击邮件链接」这一步；E2E 覆盖到验证之前为止
 - 注册限流为 5 次 / IP / 小时，E2E 在 desktop 与 mobile 两个 project 下各跑一遍易触发，相关用例会显式跳过
 - 登出为客户端丢弃令牌，服务端不维护黑名单；access token 在 15 分钟内仍有效（状态过滤已覆盖锁定 / 注销场景）
+
+## 本地联通 Runbook（auth-frontend-wiring）
+
+本段说明如何让前端（`localhost:3000`）与后端（`localhost:8080`）真正跑通，并手动走完认证主流程。
+
+### 1. 启动后端
+
+```powershell
+# 本机 mvn 不在 PATH 且默认 JDK8，须先固定环境
+$env:JAVA_HOME = "D:\Programs\java17"
+& "D:\Programs\maven\bin\mvn.cmd" spring-boot:run
+```
+
+后端监听 `http://localhost:8080`，CORS 已放行 `http://localhost:3000`。
+
+### 2. 启动前端
+
+```bash
+npm install   # 若依赖尚未安装
+npm run dev   # http://localhost:3000
+```
+
+### 3. 取验证 / 重置码（关键）
+
+邮件仅写日志、不真实投递，且默认**不打印一次性码**。本地想手动点邮件链接走通验证时，
+在后端启动时开启调试开关（**仅限本地，禁止生产开启**）：
+
+```powershell
+$env:JAVA_HOME = "D:\Programs\java17"
+$env:AUTH_MAIL_LOG_VERIFICATION_CODE = "true"   # 对应后端 auth.mail.log-verification-code
+& "D:\Programs\maven\bin\mvn.cmd" spring-boot:run
+```
+
+开启后，后端日志会打印完整前端链接，例如：
+
+```
+[MAIL] verification email sent to=you@example.com link=http://localhost:3000/auth/verify?code=xxxx
+```
+
+直接复制该链接在浏览器打开即可完成验证 / 重置。
+
+### 4. 手动走通路径
+
+1. 访问 `/register` → 注册成功 → 提示「请查收验证邮件」
+2. 从后端日志复制 `/auth/verify?code=...` 链接 → 打开 → 显示验证成功
+3. 访问 `/login` → 登录 → 自动跳回首页，右上角显示昵称 + 登出
+4. 访问 `/account` → 显示「欢迎，{昵称}」
+5. 点登出 → 跳回 `/login`，右上角回到登录 / 注册入口
+
+### 5. 自动化验证
+
+| 层 | 命令 | 证明内容 |
+|---|---|---|
+| 后端契约（全链路） | `mvn -Dtest=AuthFlowIntegrationTest test` | register→(取码)→verify→login→me→logout 真实 HTTP 全绿 |
+| 前端单测 | `npm test` | 会话引导 / 守卫 / 导航栏 / 登出 行为正确 |
+| 前端 E2E | `npm run test:e2e`（需双服务常驻） | 认证页面 UI 状态分支 |
+
+> 完整的「注册→验证→登录」链路由后端 `AuthFlowIntegrationTest` 以真实 HTTP 覆盖，
+> 不再依赖人工点击邮件链接；前端 E2E 主要覆盖页面状态分支。

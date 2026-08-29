@@ -1,51 +1,51 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-import { tokenStore } from "@/lib/auth/tokens";
+import { useAuthSession } from "@/lib/auth/session";
 
 /**
- * 路由保护。
+ * 路由保护（由会话态驱动）。
  *
  * <p>令牌存于 localStorage，Next.js middleware（Edge Runtime）读不到，
- * 故只能在客户端组件内守卫。校验完成前不渲染内容，避免受保护内容一闪而过。
+ * 故只能在客户端组件内守卫。以 {@link useAuthSession} 的 `status` 为准：
+ * 仅 `authenticated` 才渲染受保护内容，避免一闪而过。
  */
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const { status } = useAuthSession();
 
   useEffect(() => {
-    if (!tokenStore.getAccessToken()) {
+    if (status === "unauthenticated") {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-      setAuthorized(false);
-      return;
     }
-    setAuthorized(true);
-  }, [pathname, router]);
+  }, [status, pathname, router]);
 
-  if (authorized !== true) {
+  if (status !== "authenticated") {
     return null;
   }
   return <>{children}</>;
 }
 
-/** 已登录用户不应再看到登录 / 注册 / 忘记密码页，直接送回首页。 */
+/**
+ * 已登录用户不应再看到登录 / 注册 / 忘记密码页，直接送回首页。
+ *
+ * <p>`loading` 与 `unauthenticated` 都渲染子内容（避免首屏空白与 hydration 不一致），
+ * 仅当确证已登录才重定向。
+ */
 export function RedirectIfAuthenticated({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const { status } = useAuthSession();
 
   useEffect(() => {
-    if (tokenStore.getAccessToken()) {
+    if (status === "authenticated") {
       router.replace("/");
-      setAllowed(false);
-      return;
     }
-    setAllowed(true);
-  }, [router]);
+  }, [status, router]);
 
-  if (allowed !== true) {
+  if (status === "authenticated") {
     return null;
   }
   return <>{children}</>;
