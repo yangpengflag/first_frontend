@@ -97,6 +97,30 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "删除帖子（软删除）",
+        "description": "仅作者本人可删；软删除保留行，自动从所有列表 / 详情消失。",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/posts": {
@@ -965,16 +989,16 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "paged": {
-            "type": "boolean"
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
           },
           "pageNumber": {
             "type": "integer",
             "format": "int32"
           },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
+          "paged": {
+            "type": "boolean"
           },
           "unpaged": {
             "type": "boolean"

@@ -22,7 +22,11 @@ export interface paths {
          */
         put: operations["update"];
         post?: never;
-        delete?: never;
+        /**
+         * 删除帖子（软删除）
+         * @description 仅作者本人可删；软删除保留行，自动从所有列表 / 详情消失。
+         */
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -384,11 +388,11 @@ export interface components {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
             /** Format: int32 */
             pageSize?: number;
+            /** Format: int32 */
+            pageNumber?: number;
+            paged?: boolean;
             unpaged?: boolean;
         };
         PostSummary: {
@@ -466,6 +470,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PostResponse"];
                 };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
