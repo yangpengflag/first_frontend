@@ -23,18 +23,18 @@ export type UserStatus = "ACTIVE" | "LOCKED" | "DELETED" | "EMAIL_UNVERIFIED";
  * 字段集合本身仍由契约派生——后端增删或改名字段，
  * 会在此处与下游同时编译报错，不会静默漂移。
  */
-export type UserResponse = Omit<GeneratedUser, "status" | "avatarUrl"> & {
+export type UserResponse = Omit<GeneratedUser, "status" | "avatar_url"> & {
   status: UserStatus;
   /** 后端未设置头像时返回 null（生成类型仅标为 string，此处还原可空语义）。 */
-  avatarUrl: string | null;
+  avatar_url: string | null;
 };
 
 export type AuthTokenResponse = Omit<
     GeneratedTokens,
-    "user" | "accessToken" | "refreshToken"
+    "user" | "access_token" | "refresh_token"
 > & {
-  accessToken: string;
-  refreshToken: string;
+  access_token: string;
+  refresh_token: string;
   user: UserResponse;
 };
 

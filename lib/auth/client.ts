@@ -24,6 +24,8 @@ export interface AuthClientConfig {
   fetchImpl?: typeof fetch;
   /** 会话失效时回调（用于跳转登录页）。 */
   onSessionEnded?: () => void;
+  /** 每次响应携带的 request_id（链路追踪 / 可观测上下文）。 */
+  onRequestId?: (requestId: string) => void;
 }
 
 export interface AuthClient {
@@ -71,8 +73,8 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
       if (!response.ok) {
         return false;
       }
-      const data = (await response.json()) as { accessToken: string; refreshToken: string };
-      config.tokenStore.set(data.accessToken, data.refreshToken);
+      const data = (await response.json()) as { access_token: string; refresh_token: string };
+      config.tokenStore.set(data.access_token, data.refresh_token);
       return true;
     } catch {
       return false;
@@ -123,7 +125,15 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
     if (!text) {
       return undefined as T;
     }
-    return JSON.parse(text) as T;
+    const parsed: unknown = JSON.parse(text);
+    // 统一响应信封携带 request_id（顶层），取出供可观测 / 链路追踪使用
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const requestId = (parsed as Record<string, unknown>)["request_id"];
+      if (typeof requestId === "string") {
+        config.onRequestId?.(requestId);
+      }
+    }
+    return parsed as T;
   }
 
   return { request };

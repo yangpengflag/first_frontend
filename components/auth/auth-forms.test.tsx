@@ -43,10 +43,10 @@ describe("RegisterForm", () => {
     mocked.register.mockResolvedValue({
       id: "1",
       email: "alice@example.com",
-      displayName: "Alice",
-      avatarUrl: null,
+      display_name: "Alice",
+      avatar_url: null,
       status: "EMAIL_UNVERIFIED",
-      createdAt: "2026-08-29T00:00:00Z",
+      created_at: "2026-08-29T00:00:00Z",
     });
 
     render(<RegisterForm />);
@@ -113,7 +113,7 @@ describe("RegisterForm", () => {
     await user.click(screen.getByRole("button", { name: "注册" }));
 
     expect(await screen.findByRole("button", { name: "提交中…" })).toBeDisabled();
-    resolve({ id: "1", email: "a@b.c", displayName: "A", avatarUrl: null, status: "EMAIL_UNVERIFIED", createdAt: "" });
+    resolve({ id: "1", email: "a@b.c", display_name: "A", avatar_url: null, status: "EMAIL_UNVERIFIED", created_at: "" });
   });
 });
 
@@ -129,15 +129,15 @@ describe("LoginForm", () => {
   it("stores tokens and redirects on success", async () => {
     const user = userEvent.setup();
     mocked.login.mockResolvedValue({
-      accessToken: "a",
-      refreshToken: "r",
+      access_token: "a",
+      refresh_token: "r",
       user: {
         id: "1",
         email: "alice@example.com",
-        displayName: "Alice",
-        avatarUrl: null,
+        display_name: "Alice",
+        avatar_url: null,
         status: "ACTIVE",
-        createdAt: "2026-08-29T00:00:00Z",
+        created_at: "2026-08-29T00:00:00Z",
       },
     });
 
@@ -258,10 +258,10 @@ describe("VerifyStatus", () => {
     mocked.verifyEmail.mockResolvedValue({
       id: "1",
       email: "alice@example.com",
-      displayName: "Alice",
-      avatarUrl: null,
+      display_name: "Alice",
+      avatar_url: null,
       status: "ACTIVE",
-      createdAt: "2026-08-29T00:00:00Z",
+      created_at: "2026-08-29T00:00:00Z",
     });
 
     render(<VerifyStatus code="verify-code" />);

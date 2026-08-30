@@ -24,10 +24,10 @@ vi.mock("next/navigation", () => ({
 const user = {
   id: "u-1",
   email: "a@b.com",
-  displayName: "Tester",
-  avatarUrl: null,
+  display_name: "Tester",
+  avatar_url: null,
   status: "ACTIVE",
-  createdAt: "2026-01-01T00:00:00Z",
+  created_at: "2026-01-01T00:00:00Z",
 };
 
 function Probe() {

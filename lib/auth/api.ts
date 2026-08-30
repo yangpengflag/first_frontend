@@ -33,7 +33,7 @@ export const authApi = {
   /** 登录 → 200 + 令牌；非 ACTIVE 状态按状态机返回 401 / 403 / 423。 */
   async login(input: LoginRequest) {
     const result = await post<AuthTokenResponse>("/api/auth/login", input);
-    tokenStore.set(result.accessToken, result.refreshToken);
+    tokenStore.set(result.access_token, result.refresh_token);
     return result;
   },
 

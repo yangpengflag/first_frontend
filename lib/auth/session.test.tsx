@@ -26,10 +26,10 @@ vi.mock("next/navigation", () => ({
 const user: UserResponse = {
   id: "u-1",
   email: "a@b.com",
-  displayName: "Tester",
-  avatarUrl: null,
+  display_name: "Tester",
+  avatar_url: null,
   status: "ACTIVE",
-  createdAt: "2026-01-01T00:00:00Z",
+  created_at: "2026-01-01T00:00:00Z",
 };
 
 function Probe() {
@@ -37,7 +37,7 @@ function Probe() {
   return (
     <div>
       <span data-testid="status">{status}</span>
-      {user && <span data-testid="name">{user.displayName}</span>}
+      {user && <span data-testid="name">{user.display_name}</span>}
     </div>
   );
 }

@@ -926,6 +926,10 @@
           "last": {
             "type": "boolean"
           },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -942,10 +946,6 @@
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"

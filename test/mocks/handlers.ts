@@ -34,9 +34,9 @@ function mockUser(status: string): UserResponse {
   return {
     id: "11111111-1111-4111-8111-111111111111",
     email: MOCK_USERS.active,
-    displayName: "Mock User",
+    display_name: "Mock User",
     status,
-    createdAt: "2026-01-01T00:00:00Z",
+    created_at: "2026-01-01T00:00:00Z",
   };
 }
 
@@ -65,8 +65,9 @@ export const handlers = [
     }
     if (email === MOCK_USERS.active) {
       const body: AuthTokenResponse = {
-        accessToken: "mock-access-token",
-        refreshToken: "mock-refresh-token",
+        request_id: "mock-request-id",
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
         user: mockUser("ACTIVE"),
       };
       return HttpResponse.json(body, { status: 200 });
@@ -83,7 +84,8 @@ export const handlers = [
       HttpResponse.json(errorEnvelope("UNAUTHENTICATED"), { status: 401 })
   ),
 
-  http.get("*/api/auth/me", () => HttpResponse.json(mockUser("ACTIVE"), { status: 200 })),
+  http.get("*/api/auth/me", () =>
+      HttpResponse.json({ request_id: "mock-request-id", ...mockUser("ACTIVE") }, { status: 200 })),
 
   /** 登出：204，无响应体（空响应体必须被正确处理，不能被当成失败）。 */
   http.post("*/api/auth/logout", () => new HttpResponse(null, { status: 204 })),

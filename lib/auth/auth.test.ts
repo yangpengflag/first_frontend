@@ -157,7 +157,7 @@ describe("authClient session refresh", () => {
     const fetchImpl = vi
         .fn()
         .mockResolvedValueOnce(errorResponse(401, "UNAUTHENTICATED"))
-        .mockResolvedValueOnce(jsonResponse(200, { accessToken: "access-2", refreshToken: "refresh-2" }))
+        .mockResolvedValueOnce(jsonResponse(200, { access_token: "access-2", refresh_token: "refresh-2" }))
         .mockResolvedValueOnce(jsonResponse(200, { status: "ACTIVE" }));
     const { client, tokenStore } = setup(fetchImpl);
     tokenStore.set("access-1", "refresh-1");
@@ -175,7 +175,7 @@ describe("authClient session refresh", () => {
     const fetchImpl = vi
         .fn()
         .mockResolvedValueOnce(errorResponse(401, "UNAUTHENTICATED"))
-        .mockResolvedValueOnce(jsonResponse(200, { accessToken: "a2", refreshToken: "r2" }))
+        .mockResolvedValueOnce(jsonResponse(200, { access_token: "a2", refresh_token: "r2" }))
         .mockResolvedValueOnce(jsonResponse(200, {}));
     const { client, tokenStore } = setup(fetchImpl);
     tokenStore.set("a1", "r1");
@@ -215,7 +215,7 @@ describe("authClient session refresh", () => {
     const fetchImpl = vi
         .fn()
         .mockResolvedValueOnce(errorResponse(401, "UNAUTHENTICATED"))
-        .mockResolvedValueOnce(jsonResponse(200, { accessToken: "a2", refreshToken: "r2" }))
+        .mockResolvedValueOnce(jsonResponse(200, { access_token: "a2", refresh_token: "r2" }))
         .mockResolvedValue(errorResponse(401, "UNAUTHENTICATED"));
     const { client, tokenStore } = setup(fetchImpl);
     tokenStore.set("a1", "r1");

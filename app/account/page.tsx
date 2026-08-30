@@ -17,7 +17,7 @@ function AccountContent() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">
-        欢迎，{user?.displayName}
+        欢迎，{user?.display_name}
       </h1>
       {user?.email && (
         <p className="mt-2 text-sm text-muted-foreground">{user.email}</p>

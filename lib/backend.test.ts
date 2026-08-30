@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { MOCK_USERS } from "@/test/mocks/handlers";
 
@@ -19,8 +19,18 @@ describe("fetchFromBackend", () => {
       body: JSON.stringify({ email: MOCK_USERS.active, password: "Str0ng!Pass" }),
     });
 
-    expect(result.accessToken).toBe("mock-access-token");
+    expect(result.access_token).toBe("mock-access-token");
     expect(result.user?.status).toBe("ACTIVE");
+  });
+
+  it("将响应中的 request_id 透传至日志", async () => {
+    const spy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    await fetchFromBackend<AuthTokenResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email: MOCK_USERS.active, password: "Str0ng!Pass" }),
+    });
+    expect(spy).toHaveBeenCalledWith("[backend] request_id:", "mock-request-id");
+    spy.mockRestore();
   });
 
   it("邮箱或密码错误抛出 401 INVALID_CREDENTIALS", async () => {

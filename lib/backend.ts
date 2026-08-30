@@ -33,6 +33,9 @@ const client = createAuthClient({
   onSessionEnded: () => {
     // 令牌已由客户端清除；跳转由路由守卫负责
   },
+  onRequestId: (requestId) => {
+    if (requestId) console.debug("[backend] request_id:", requestId);
+  },
 });
 
 /**

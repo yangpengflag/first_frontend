@@ -22,7 +22,7 @@ export function NavBar() {
       <div className="flex items-center gap-3">
         {status === "authenticated" ? (
           <>
-            <span className="text-sm">{user?.displayName}</span>
+            <span className="text-sm">{user?.display_name}</span>
             <LogoutButton />
           </>
         ) : status === "unauthenticated" ? (

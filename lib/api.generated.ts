@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 帖子详情
+         * @description 仅返回 PUBLISHED；草稿 / 已软删返回 404。
+         */
+        get: operations["get"];
+        /**
+         * 编辑帖子
+         * @description 仅作者本人可编辑；可补丁式更新，含 DRAFT→PUBLISHED 发布。
+         */
+        put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 公开列表
+         * @description 仅返回 PUBLISHED，按创建时间倒序分页；每项含作者展示信息。
+         */
+        get: operations["list"];
+        put?: never;
+        /**
+         * 创建帖子
+         * @description authorId 取自令牌主体；status 缺省 DRAFT，可直传 PUBLISHED 发布。
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/reset-password": {
         parameters: {
             query?: never;
@@ -149,6 +197,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 我的帖子
+         * @description 需鉴权，返回当前用户全部状态（含 DRAFT）的帖子。
+         */
+        get: operations["listMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/hello": {
         parameters: {
             query?: never;
@@ -220,6 +288,41 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        UpdatePostRequest: {
+            title?: string;
+            content?: string;
+            coverImageUrl?: string;
+            tags?: string[];
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED";
+        };
+        PostResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            content?: string;
+            cover_image_url?: string;
+            tags?: string[];
+            status?: string;
+            /** Format: uuid */
+            author_id?: string;
+            author_name?: string;
+            author_avatar_url?: string;
+            summary?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        CreatePostRequest: {
+            title: string;
+            content: string;
+            coverImageUrl?: string;
+            tags?: string[];
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED";
+        };
         ResetPasswordRequest: {
             code: string;
             newPassword: string;
@@ -233,21 +336,23 @@ export interface components {
             displayName: string;
         };
         UserResponse: {
+            request_id?: string;
             /** Format: uuid */
             id?: string;
             email?: string;
-            displayName?: string;
-            avatarUrl?: string;
+            display_name?: string;
+            avatar_url?: string;
             status?: string;
             /** Format: date-time */
-            createdAt?: string;
+            created_at?: string;
         };
         RefreshRequest: {
             refreshToken: string;
         };
         AuthTokenResponse: {
-            accessToken?: string;
-            refreshToken?: string;
+            request_id?: string;
+            access_token?: string;
+            refresh_token?: string;
             user?: components["schemas"]["UserResponse"];
         };
         LoginRequest: {
@@ -256,6 +361,56 @@ export interface components {
         };
         ForgotPasswordRequest: {
             email: string;
+        };
+        PagePostSummary: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            numberOfElements?: number;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["PostSummary"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            pageable?: components["schemas"]["PageableObject"];
+            empty?: boolean;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            unpaged?: boolean;
+        };
+        PostSummary: {
+            request_id?: string;
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            cover_image_url?: string;
+            tags?: string[];
+            status?: string;
+            /** Format: uuid */
+            author_id?: string;
+            author_name?: string;
+            author_avatar_url?: string;
+            summary?: string;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        SortObject: {
+            empty?: boolean;
+            sorted?: boolean;
+            unsorted?: boolean;
         };
     };
     responses: never;
@@ -266,6 +421,101 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagePostSummary"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
     resetPassword: {
         parameters: {
             query?: never;
@@ -549,6 +799,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    listMine: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagePostSummary"];
+                };
             };
         };
     };
