@@ -18,9 +18,161 @@
     {
       "name": "认证",
       "description": "注册 / 登录 / 邮箱验证 / 密码重置 / 会话维持。\n所有错误响应使用统一信封 {\"error\":{\"code\":...,\"message\":...,\"details\":...}}，\n前端一律基于 error.code 分支而非 HTTP 状态码。"
+    },
+    {
+      "name": "帖子",
+      "description": "旅行攻略（Story）的发布 / 编辑 / 公开列表 / 详情 / 我的帖子。\n所有错误响应使用统一信封 {\"error\":{\"code\":...,\"message\":...}}。"
     }
   ],
   "paths": {
+    "/api/posts/{id}": {
+      "get": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "帖子详情",
+        "description": "仅返回 PUBLISHED；草稿 / 已软删返回 404。",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "编辑帖子",
+        "description": "仅作者本人可编辑；可补丁式更新，含 DRAFT→PUBLISHED 发布。",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "公开列表",
+        "description": "仅返回 PUBLISHED，按创建时间倒序分页；每项含作者展示信息。",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagePostSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "创建帖子",
+        "description": "authorId 取自令牌主体；status 缺省 DRAFT，可直传 PUBLISHED 发布。",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/reset-password": {
       "post": {
         "tags": [
@@ -318,6 +470,50 @@
         }
       }
     },
+    "/api/posts/me": {
+      "get": {
+        "tags": [
+          "帖子"
+        ],
+        "summary": "我的帖子",
+        "description": "需鉴权，返回当前用户全部状态（含 DRAFT）的帖子。",
+        "operationId": "listMine",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagePostSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hello": {
       "get": {
         "tags": [
@@ -449,6 +645,130 @@
   },
   "components": {
     "schemas": {
+      "UpdatePostRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "content": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "pattern": "^(https?://.+)?$"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 30,
+              "minLength": 0
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          }
+        }
+      },
+      "PostResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "author_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "author_avatar_url": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coverImageUrl": {
+            "type": "string",
+            "pattern": "^(https?://.+)?$"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 30,
+              "minLength": 0
+            },
+            "maxItems": 10,
+            "minItems": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          }
+        },
+        "required": [
+          "content",
+          "title"
+        ]
+      },
       "ResetPasswordRequest": {
         "type": "object",
         "properties": {
@@ -506,6 +826,9 @@
       "UserResponse": {
         "type": "object",
         "properties": {
+          "request_id": {
+            "type": "string"
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -513,16 +836,16 @@
           "email": {
             "type": "string"
           },
-          "displayName": {
+          "display_name": {
             "type": "string"
           },
-          "avatarUrl": {
+          "avatar_url": {
             "type": "string"
           },
           "status": {
             "type": "string"
           },
-          "createdAt": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -543,10 +866,13 @@
       "AuthTokenResponse": {
         "type": "object",
         "properties": {
-          "accessToken": {
+          "request_id": {
             "type": "string"
           },
-          "refreshToken": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
             "type": "string"
           },
           "user": {
@@ -582,6 +908,136 @@
         "required": [
           "email"
         ]
+      },
+      "PagePostSummary": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PostSummary": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "cover_image_url": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "author_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "author_avatar_url": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          }
+        }
       }
     }
   }
