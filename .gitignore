@@ -41,3 +41,7 @@ next-env.d.ts
 /playwright-install.log
 /playwright-install.err
 /e2e-run*.log
+
+# temp build/test artifacts (safe-delete guard workaround backups)
+.next.bak/
+test-results.bak*/

@@ -18,6 +18,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   ACCOUNT_LOCKED: "账号已被锁定，请稍后再试",
   EMAIL_ALREADY_REGISTERED: "该邮箱已注册，请直接登录",
   RATE_LIMITED: "操作过于频繁，请稍后再试",
+  POST_NOT_FOUND: "内容不存在或已下架",
+  NOT_POST_AUTHOR: "你没有权限操作该内容",
   INTERNAL_ERROR: "服务异常，请稍后重试",
 };
 

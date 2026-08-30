@@ -50,6 +50,8 @@ export type ErrorCode =
   | "ACCOUNT_LOCKED"
   | "EMAIL_ALREADY_REGISTERED"
   | "RATE_LIMITED"
+  | "POST_NOT_FOUND"
+  | "NOT_POST_AUTHOR"
   | "INTERNAL_ERROR";
 
 /** 统一错误信封。details 仅在参数校验失败等场景出现。 */
