@@ -52,6 +52,8 @@ export type ErrorCode =
   | "RATE_LIMITED"
   | "POST_NOT_FOUND"
   | "NOT_POST_AUTHOR"
+  | "COMMENT_NOT_FOUND"
+  | "INVALID_PARENT_COMMENT"
   | "INTERNAL_ERROR";
 
 /** 统一错误信封。details 仅在参数校验失败等场景出现。 */

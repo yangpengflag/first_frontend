@@ -14,6 +14,9 @@ import type { PostResponse } from "@/lib/posts/types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { VotePanel } from "./VotePanel";
+import { CommentSection } from "./CommentSection";
+import { BookmarkButton } from "./BookmarkButton";
 
 type State =
   | { kind: "loading" }
@@ -94,7 +97,8 @@ export function PostDetail({ id }: { id: string }) {
   const initial = authorName.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <article>
+    <div className="space-y-10">
+      <article>
       <div
         className="aspect-[16/9] w-full rounded-xl bg-slate-100 bg-cover bg-center"
         style={post.cover_image_url ? { backgroundImage: `url(${post.cover_image_url})` } : undefined}
@@ -147,6 +151,13 @@ export function PostDetail({ id }: { id: string }) {
       <div className="post-content mt-8">
         <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{post.content ?? ""}</ReactMarkdown>
       </div>
-    </article>
+      </article>
+
+      <div className="space-y-8 border-t border-slate-100 pt-8">
+        <VotePanel postId={id} />
+        <CommentSection postId={id} />
+        <BookmarkButton postId={id} />
+      </div>
+    </div>
   );
 }

@@ -56,6 +56,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts/{postId}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 投票（创建 / 切换 / 取消）
+         * @description 需鉴权。同类型再投取消，异类型切换。按用户维度限流。
+         */
+        post: operations["vote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posts/{postId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 顶层评论列表
+         * @description 需鉴权；按创建时间倒序分页，含 reply_count 与作者信息。
+         */
+        get: operations["list_1"];
+        put?: never;
+        /**
+         * 发布评论
+         * @description 需鉴权。顶层评论 parent_comment_id 留空；回复须为本帖某顶层评论 id。
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posts/{postId}/bookmark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 收藏状态查询
+         * @description 需鉴权。精确返回当前用户是否已收藏该帖；帖子不存在返回 404。
+         */
+        get: operations["status"];
+        put?: never;
+        /**
+         * 切换收藏
+         * @description 需鉴权。已收藏则取消，未收藏则收藏。
+         */
+        post: operations["toggle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/reset-password": {
         parameters: {
             query?: never;
@@ -201,6 +269,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/posts/{postId}/vote/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 投票统计
+         * @description 需鉴权。返回 UP/DOWN 总数与当前用户投票态。
+         */
+        get: operations["stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/me": {
         parameters: {
             query?: never;
@@ -233,6 +321,46 @@ export interface paths {
          * @description 返回固定文案，用于确认后端进程存活。
          */
         get: operations["hello"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comments/{commentId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 回复列表
+         * @description 需鉴权；按创建时间升序分页。
+         */
+        get: operations["replies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bookmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 我的收藏列表
+         * @description 需鉴权；全量返回（失效帖子以 available=false 占位），按收藏时间倒序。
+         */
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -288,6 +416,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 删除评论（软删除）
+         * @description 需鉴权且须为作者本人；顶层评论级联软删其回复。
+         */
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -326,6 +474,47 @@ export interface components {
             tags?: string[];
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED";
+        };
+        VoteRequest: {
+            /** @enum {string} */
+            vote_type: "UP" | "DOWN";
+        };
+        VoteResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            post_id?: string;
+            user_vote?: string;
+        };
+        CreateCommentRequest: {
+            content: string;
+            /** Format: uuid */
+            parent_comment_id?: string;
+        };
+        CommentResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            post_id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            parent_comment_id?: string;
+            content?: string;
+            author_name?: string;
+            author_avatar_url?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+            /** Format: int64 */
+            reply_count?: number;
+        };
+        BookmarkResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            post_id?: string;
+            bookmarked?: boolean;
         };
         ResetPasswordRequest: {
             code: string;
@@ -371,29 +560,29 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["PostSummary"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            unpaged?: boolean;
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
-            /** Format: int32 */
-            pageSize?: number;
-            /** Format: int32 */
-            pageNumber?: number;
-            paged?: boolean;
-            unpaged?: boolean;
         };
         PostSummary: {
             request_id?: string;
@@ -412,9 +601,67 @@ export interface components {
             created_at?: string;
         };
         SortObject: {
-            empty?: boolean;
             sorted?: boolean;
             unsorted?: boolean;
+            empty?: boolean;
+        };
+        VoteStatsResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            post_id?: string;
+            /** Format: int64 */
+            up_count?: number;
+            /** Format: int64 */
+            down_count?: number;
+            user_vote?: string;
+        };
+        PageCommentResponse: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["CommentResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
+        };
+        BookmarkStatusResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            post_id?: string;
+            bookmarked?: boolean;
+        };
+        BookmarkSummary: {
+            /** Format: uuid */
+            post_id?: string;
+            available?: boolean;
+            post?: components["schemas"]["PostSummary"];
+        };
+        PageBookmarkSummary: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["BookmarkSummary"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            empty?: boolean;
         };
     };
     responses: never;
@@ -536,6 +783,127 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    vote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoteResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageCommentResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentResponse"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookmarkStatusResponse"];
+                };
+            };
+        };
+    };
+    toggle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookmarkResponse"];
                 };
             };
         };
@@ -826,6 +1194,28 @@ export interface operations {
             };
         };
     };
+    stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoteStatsResponse"];
+                };
+            };
+        };
+    };
     listMine: {
         parameters: {
             query?: {
@@ -867,6 +1257,54 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    replies: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageCommentResponse"];
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageBookmarkSummary"];
                 };
             };
         };
@@ -965,6 +1403,26 @@ export interface operations {
             };
             /** @description ACCOUNT_LOCKED：账号已锁定 */
             423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
