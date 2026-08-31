@@ -49,4 +49,32 @@ describe("PostCard", () => {
     render(<PostCard post={{ ...base, author_name: undefined }} />);
     expect(screen.getByText("[unknown user]")).toBeInTheDocument();
   });
+
+  it("计数为 0 时整行互动统计隐藏", () => {
+    render(
+      <PostCard
+        post={{ ...base, comment_count: 0, up_vote_count: 0, bookmark_count: 0 }}
+      />
+    );
+    expect(screen.queryByTestId("stat-comments")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("stat-upvotes")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("stat-bookmarks")).not.toBeInTheDocument();
+  });
+
+  it("仅非零项展示，数字走紧凑格式", () => {
+    render(<PostCard post={{ ...base, comment_count: 0, up_vote_count: 1234 }} />);
+    expect(screen.queryByTestId("stat-comments")).not.toBeInTheDocument();
+    expect(screen.getByTestId("stat-upvotes")).toHaveTextContent("1.2k");
+  });
+
+  it("计数 >=1000 压成 k 格式", () => {
+    render(
+      <PostCard
+        post={{ ...base, comment_count: 1234, up_vote_count: 1500, bookmark_count: 999 }}
+      />
+    );
+    expect(screen.getByTestId("stat-comments")).toHaveTextContent("1.2k");
+    expect(screen.getByTestId("stat-upvotes")).toHaveTextContent("1.5k");
+    expect(screen.getByTestId("stat-bookmarks")).toHaveTextContent("999");
+  });
 });

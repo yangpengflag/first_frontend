@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Bookmark, ImageIcon, MessageSquare, ThumbsUp } from "lucide-react";
 
 import type { PostSummary } from "@/lib/posts/types";
-import { formatPostDate } from "@/lib/posts/format";
+import { formatCount, formatPostDate } from "@/lib/posts/format";
 
 /**
  * 列表卡片（公开帖子）。
@@ -15,6 +15,11 @@ export function PostCard({ post }: { post: PostSummary }) {
   const href = `/posts/${post.id}`;
   const authorName = post.author_name ?? "[unknown user]";
   const initial = authorName.trim().charAt(0).toUpperCase() || "?";
+
+  const commentCount = post.comment_count ?? 0;
+  const upVoteCount = post.up_vote_count ?? 0;
+  const bookmarkCount = post.bookmark_count ?? 0;
+  const hasStats = commentCount > 0 || upVoteCount > 0 || bookmarkCount > 0;
 
   return (
     <Link href={href} className="group block focus-visible:outline-none">
@@ -63,20 +68,26 @@ export function PostCard({ post }: { post: PostSummary }) {
             </div>
           )}
 
-          {(post.comment_count !== undefined || post.up_vote_count !== undefined || post.bookmark_count !== undefined) && (
+          {hasStats && (
             <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">
-              <span className="flex items-center gap-1">
-                <MessageSquare className="h-4 w-4" aria-hidden="true" />
-                {post.comment_count ?? 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <ThumbsUp className="h-4 w-4" aria-hidden="true" />
-                {post.up_vote_count ?? 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <Bookmark className="h-4 w-4" aria-hidden="true" />
-                {post.bookmark_count ?? 0}
-              </span>
+              {commentCount > 0 && (
+                <span data-testid="stat-comments" className="flex items-center gap-1">
+                  <MessageSquare className="h-4 w-4" aria-hidden="true" />
+                  {formatCount(commentCount)}
+                </span>
+              )}
+              {upVoteCount > 0 && (
+                <span data-testid="stat-upvotes" className="flex items-center gap-1">
+                  <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+                  {formatCount(upVoteCount)}
+                </span>
+              )}
+              {bookmarkCount > 0 && (
+                <span data-testid="stat-bookmarks" className="flex items-center gap-1">
+                  <Bookmark className="h-4 w-4" aria-hidden="true" />
+                  {formatCount(bookmarkCount)}
+                </span>
+              )}
             </div>
           )}
 
