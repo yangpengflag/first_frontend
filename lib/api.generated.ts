@@ -41,7 +41,7 @@ export interface paths {
         };
         /**
          * 公开列表
-         * @description 仅返回 PUBLISHED，按创建时间倒序分页；每项含作者展示信息。
+         * @description 仅返回 PUBLISHED；支持 sort=latest（cursor 翻页）/ top / most_commented（offset 翻页），每项含作者展示信息与互动统计。
          */
         get: operations["list"];
         put?: never;
@@ -298,7 +298,7 @@ export interface paths {
         };
         /**
          * 我的帖子
-         * @description 需鉴权，返回当前用户全部状态（含 DRAFT）的帖子。
+         * @description 需鉴权，返回当前用户全部状态（含 DRAFT）的帖子，并带互动统计与排序 / 分页。
          */
         get: operations["listMine"];
         put?: never;
@@ -555,34 +555,17 @@ export interface components {
         ForgotPasswordRequest: {
             email: string;
         };
-        PagePostSummary: {
-            /** Format: int64 */
-            totalElements?: number;
+        PostListResponse: {
+            request_id?: string;
+            items?: components["schemas"]["PostSummary"][];
+            next_cursor?: string;
+            has_more?: boolean;
             /** Format: int32 */
-            totalPages?: number;
-            /** Format: int32 */
-            numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            first?: boolean;
-            last?: boolean;
+            page?: number;
             /** Format: int32 */
             size?: number;
-            content?: components["schemas"]["PostSummary"][];
-            /** Format: int32 */
-            number?: number;
-            sort?: components["schemas"]["SortObject"];
-            empty?: boolean;
-        };
-        PageableObject: {
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            /** Format: int32 */
-            pageSize?: number;
-            unpaged?: boolean;
             /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
+            total?: number;
         };
         PostSummary: {
             request_id?: string;
@@ -599,11 +582,12 @@ export interface components {
             summary?: string;
             /** Format: date-time */
             created_at?: string;
-        };
-        SortObject: {
-            sorted?: boolean;
-            unsorted?: boolean;
-            empty?: boolean;
+            /** Format: int64 */
+            comment_count?: number;
+            /** Format: int64 */
+            up_vote_count?: number;
+            /** Format: int64 */
+            bookmark_count?: number;
         };
         VoteStatsResponse: {
             request_id?: string;
@@ -621,17 +605,33 @@ export interface components {
             /** Format: int32 */
             totalPages?: number;
             /** Format: int32 */
-            numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
             size?: number;
             content?: components["schemas"]["CommentResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             empty?: boolean;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
+            /** Format: int32 */
+            pageNumber?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            unpaged?: boolean;
+        };
+        SortObject: {
+            empty?: boolean;
+            sorted?: boolean;
+            unsorted?: boolean;
         };
         BookmarkStatusResponse: {
             request_id?: string;
@@ -651,16 +651,16 @@ export interface components {
             /** Format: int32 */
             totalPages?: number;
             /** Format: int32 */
-            numberOfElements?: number;
-            pageable?: components["schemas"]["PageableObject"];
-            first?: boolean;
-            last?: boolean;
-            /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BookmarkSummary"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             empty?: boolean;
         };
     };
@@ -743,6 +743,8 @@ export interface operations {
     list: {
         parameters: {
             query?: {
+                sort?: string;
+                cursor?: string;
                 page?: number;
                 size?: number;
             };
@@ -758,7 +760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagePostSummary"];
+                    "application/json": components["schemas"]["PostListResponse"];
                 };
             };
         };
@@ -1219,6 +1221,8 @@ export interface operations {
     listMine: {
         parameters: {
             query?: {
+                sort?: string;
+                cursor?: string;
                 page?: number;
                 size?: number;
             };
@@ -1234,7 +1238,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagePostSummary"];
+                    "application/json": components["schemas"]["PostListResponse"];
                 };
             };
         };

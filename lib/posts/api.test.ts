@@ -24,11 +24,9 @@ afterEach(() => {
 describe("postsApi", () => {
   it("list() 拉取公开列表并透传分页参数", async () => {
     const page = {
-      content: [{ id: "p1", title: "Chengdu hikes", status: "PUBLISHED" }],
-      totalElements: 1,
-      number: 0,
-      first: true,
-      last: true,
+      items: [{ id: "p1", title: "Chengdu hikes", status: "PUBLISHED" }],
+      next_cursor: null,
+      has_more: false,
     };
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(200, page));
 
@@ -38,13 +36,13 @@ describe("postsApi", () => {
     expect(calledUrl).toContain("/api/posts?");
     expect(calledUrl).toContain("page=0");
     expect(calledUrl).toContain("size=20");
-    expect(result.content?.[0]?.id).toBe("p1");
+    expect(result.items?.[0]?.id).toBe("p1");
   });
 
   it("list() 缺省参数不加查询串", async () => {
     const fetchMock = vi
         .spyOn(globalThis, "fetch")
-        .mockResolvedValue(jsonResponse(200, { content: [], first: true, last: true }));
+        .mockResolvedValue(jsonResponse(200, { items: [] }));
 
     await postsApi.list();
 

@@ -24,6 +24,17 @@ describe("PostCard", () => {
     expect(screen.getByText(/2026年8月30日/)).toBeInTheDocument();
   });
 
+  it("渲染互动统计（评论/点赞/收藏）", () => {
+    render(
+        <PostCard
+            post={{ ...base, comment_count: 3, up_vote_count: 6, bookmark_count: 2 }}
+        />
+    );
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("6")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
   it("无封面时显示渐变占位", () => {
     render(<PostCard post={base} />);
     expect(screen.getByTestId("cover-placeholder")).toBeInTheDocument();

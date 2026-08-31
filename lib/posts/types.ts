@@ -23,13 +23,15 @@ export type PostSummary = Omit<components["schemas"]["PostSummary"], "status"> &
 
 export type CreatePostRequest = components["schemas"]["CreatePostRequest"];
 
-/** 分页列表：把 `content` 项收紧为受约束的 {@link PostSummary}（status 枚举化）。 */
-export type PagePostSummary = Omit<components["schemas"]["PagePostSummary"], "content"> & {
-  content: PostSummary[];
+/** 分页列表信封：把 `items` 项收紧为受约束的 {@link PostSummary}（status 枚举化）。 */
+export type PostListResponse = Omit<components["schemas"]["PostListResponse"], "items"> & {
+  items: PostSummary[];
 };
 
-/** 列表分页参数（缺省由后端取默认值 page=0 / size=20）。 */
+/** 列表分页参数（sort=latest 用 cursor 翻页；sort=top/most_commented 用 page/size 翻页）。 */
 export interface PostListParams {
+  sort?: "latest" | "top" | "most_commented";
+  cursor?: string;
   page?: number;
   size?: number;
 }

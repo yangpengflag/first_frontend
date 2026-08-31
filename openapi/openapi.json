@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://127.0.0.1:8080",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -141,9 +141,25 @@
           "帖子"
         ],
         "summary": "公开列表",
-        "description": "仅返回 PUBLISHED，按创建时间倒序分页；每项含作者展示信息。",
+        "description": "仅返回 PUBLISHED；支持 sort=latest（cursor 翻页）/ top / most_commented（offset 翻页），每项含作者展示信息与互动统计。",
         "operationId": "list",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "page",
             "in": "query",
@@ -151,7 +167,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 0
+              "default": 1
             }
           },
           {
@@ -171,7 +187,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagePostSummary"
+                  "$ref": "#/components/schemas/PostListResponse"
                 }
               }
             }
@@ -746,9 +762,25 @@
           "帖子"
         ],
         "summary": "我的帖子",
-        "description": "需鉴权，返回当前用户全部状态（含 DRAFT）的帖子。",
+        "description": "需鉴权，返回当前用户全部状态（含 DRAFT）的帖子，并带互动统计与排序 / 分页。",
         "operationId": "listMine",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "page",
             "in": "query",
@@ -756,7 +788,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 0
+              "default": 1
             }
           },
           {
@@ -776,7 +808,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagePostSummary"
+                  "$ref": "#/components/schemas/PostListResponse"
                 }
               }
             }
@@ -1409,75 +1441,35 @@
           "email"
         ]
       },
-      "PagePostSummary": {
+      "PostListResponse": {
         "type": "object",
         "properties": {
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
+          "request_id": {
+            "type": "string"
           },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PostSummary"
             }
           },
-          "number": {
+          "next_cursor": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "page": {
             "type": "integer",
             "format": "int32"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "paged": {
-            "type": "boolean"
-          },
-          "pageNumber": {
+          "size": {
             "type": "integer",
             "format": "int32"
           },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unpaged": {
-            "type": "boolean"
-          },
-          "offset": {
+          "total": {
             "type": "integer",
             "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
           }
         }
       },
@@ -1522,20 +1514,18 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "sorted": {
-            "type": "boolean"
           },
-          "unsorted": {
-            "type": "boolean"
+          "comment_count": {
+            "type": "integer",
+            "format": "int64"
           },
-          "empty": {
-            "type": "boolean"
+          "up_vote_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bookmark_count": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -1573,19 +1563,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -1603,7 +1580,60 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
             "type": "boolean"
           }
         }
@@ -1649,19 +1679,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -1678,6 +1695,19 @@
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
           },
           "empty": {
             "type": "boolean"

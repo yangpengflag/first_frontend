@@ -9,17 +9,11 @@ vi.mock("@/lib/posts/api", () => ({
   postsApi: { list: (...args: unknown[]) => listMock(...args) },
 }));
 
-function pageOf(content: unknown[], over: Record<string, unknown> = {}) {
+function pageOf(items: unknown[], over: Record<string, unknown> = {}) {
   return {
-    content,
-    totalElements: content.length,
-    totalPages: 1,
-    first: true,
-    last: true,
-    numberOfElements: content.length,
-    size: 20,
-    number: 0,
-    empty: content.length === 0,
+    items,
+    next_cursor: null,
+    has_more: false,
     ...over,
   };
 }
@@ -62,19 +56,28 @@ describe("PostList", () => {
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
   });
 
-  it("非末页时下一页翻页", async () => {
+  it("非末页时下一页翻页（cursor）", async () => {
     listMock.mockResolvedValue(
         pageOf([{ id: "1", title: "A", status: "PUBLISHED" }], {
-          first: false,
-          last: false,
-          number: 0,
+          has_more: true,
+          next_cursor: "CUR",
         })
     );
     render(<PostList />);
     await screen.findByText("A");
     await userEvent.click(screen.getByRole("button", { name: /下一页/ }));
     await waitFor(() =>
-        expect(listMock).toHaveBeenLastCalledWith({ page: 1, size: 20 })
+        expect(listMock).toHaveBeenLastCalledWith({ sort: "latest", cursor: "CUR", size: 20 })
+    );
+  });
+
+  it("切换排序触发对应 sort 参数", async () => {
+    listMock.mockResolvedValue(pageOf([{ id: "1", title: "A", status: "PUBLISHED" }]));
+    render(<PostList />);
+    await screen.findByText("A");
+    await userEvent.click(screen.getByRole("button", { name: /最多点赞/ }));
+    await waitFor(() =>
+        expect(listMock).toHaveBeenLastCalledWith({ sort: "top", size: 20, page: 1 })
     );
   });
 });

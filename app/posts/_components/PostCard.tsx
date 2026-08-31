@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ImageIcon } from "lucide-react";
+import { Bookmark, ImageIcon, MessageSquare, ThumbsUp } from "lucide-react";
 
 import type { PostSummary } from "@/lib/posts/types";
 import { formatPostDate } from "@/lib/posts/format";
@@ -60,6 +60,23 @@ export function PostCard({ post }: { post: PostSummary }) {
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+
+          {(post.comment_count !== undefined || post.up_vote_count !== undefined || post.bookmark_count !== undefined) && (
+            <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">
+              <span className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" aria-hidden="true" />
+                {post.comment_count ?? 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+                {post.up_vote_count ?? 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Bookmark className="h-4 w-4" aria-hidden="true" />
+                {post.bookmark_count ?? 0}
+              </span>
             </div>
           )}
 

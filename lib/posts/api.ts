@@ -1,8 +1,8 @@
 import { fetchFromBackend } from "../backend";
 import type {
   CreatePostRequest,
-  PagePostSummary,
   PostListParams,
+  PostListResponse,
   PostResponse,
 } from "./types";
 
@@ -35,9 +35,21 @@ function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const postsApi = {
-  /** 公开列表：仅 PUBLISHED，分页，无需鉴权。 */
+  /** 公开列表：仅 PUBLISHED；sort=latest（cursor 翻页）/ top / most_commented（offset 翻页），无需鉴权。 */
   list(params: PostListParams = {}) {
-    return get<PagePostSummary>("/api/posts", {
+    return get<PostListResponse>("/api/posts", {
+      sort: params.sort,
+      cursor: params.cursor,
+      page: params.page,
+      size: params.size,
+    });
+  },
+
+  /** 我的帖子：当前用户全部状态（含 DRAFT），并带互动统计与排序 / 分页；需鉴权。 */
+  me(params: PostListParams = {}) {
+    return get<PostListResponse>("/api/posts/me", {
+      sort: params.sort,
+      cursor: params.cursor,
       page: params.page,
       size: params.size,
     });
