@@ -12,6 +12,12 @@ export type CommentResponse = components["schemas"]["CommentResponse"];
 export type CreateCommentRequest = components["schemas"]["CreateCommentRequest"];
 export type PageCommentResponse = components["schemas"]["PageCommentResponse"];
 
+/**
+ * 评论前端视图态：在 {@link CommentResponse} 基础上叠加乐观插入所需的 UI 标记。
+ * 仅前端使用，不进入 API 层。
+ */
+export type CommentView = CommentResponse & { pending?: boolean };
+
 export type CommentErrorCode =
   | "COMMENT_NOT_FOUND"
   | "INVALID_PARENT_COMMENT"

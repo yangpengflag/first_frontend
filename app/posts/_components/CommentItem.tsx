@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Loader2, MessageSquare, Send, Trash2 } from "lucide-react";
+import { Loader2, MessageSquare, Send, Trash2, X } from "lucide-react";
 
 import { commentsApi } from "@/lib/comments/api";
 import { describeCommentError } from "@/lib/comments/messages";
-import type { CommentResponse } from "@/lib/comments/types";
+import type { CommentView } from "@/lib/comments/types";
+import { useOptimisticAction } from "@/lib/engagement/useOptimisticAction";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -17,23 +18,29 @@ function formatTime(iso?: string): string {
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
 }
 
+function makeTempId(): string {
+  return `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 /**
- * 单条评论（含两层回复与作者删除）。
+ * 单条评论（含两层回复与作者删除，乐观回复）。
  *
  * <p>`content` 为 null 视为软删，响应层显示「评论已删除」占位。回复列表按创建时间升序，
- * `parent_comment_id` 指向所属顶层评论。
+ * `parent_comment_id` 指向所属顶层评论。回复先乐观插入本地，再异步请求，失败回滚 + 瞬时提示。
  */
 export function CommentItem({
   comment,
   postId,
   currentUserId,
+  currentUserName,
 }: {
-  comment: CommentResponse;
+  comment: CommentView;
   postId: string;
   currentUserId?: string | null;
+  currentUserName?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [replies, setReplies] = useState<CommentResponse[]>([]);
+  const [replies, setReplies] = useState<CommentView[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -42,6 +49,8 @@ export function CommentItem({
   const [deleted, setDeleted] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [itemError, setItemError] = useState<string | null>(null);
+  const [replyCount, setReplyCount] = useState(comment.reply_count ?? 0);
+  const { run, alert, dismissAlert } = useOptimisticAction();
 
   const isDeleted = deleted || comment.content == null;
 
@@ -50,10 +59,10 @@ export function CommentItem({
     setLoadingReplies(true);
     setReplyError(null);
     commentsApi
-        .replies(comment.id, 0, REPLY_PAGE_SIZE)
-        .then((res) => setReplies(res.content ?? []))
-        .catch((e: unknown) => setReplyError(describeCommentError(e)))
-        .finally(() => setLoadingReplies(false));
+      .replies(comment.id, 0, REPLY_PAGE_SIZE)
+      .then((res) => setReplies((res.content ?? []) as CommentView[]))
+      .catch((e: unknown) => setReplyError(describeCommentError(e)))
+      .finally(() => setLoadingReplies(false));
   }, [comment.id]);
 
   const toggleExpand = useCallback(() => {
@@ -67,26 +76,49 @@ export function CommentItem({
   const submitReply = useCallback(() => {
     const content = replyDraft.trim();
     if (!content || !comment.id) return;
+    const tempId = makeTempId();
+    const optimistic: CommentView = {
+      id: tempId,
+      post_id: postId,
+      parent_comment_id: comment.id,
+      user_id: currentUserId ?? undefined,
+      author_name: currentUserName ?? "我",
+      content,
+      created_at: new Date().toISOString(),
+      reply_count: 0,
+      pending: true,
+    };
     setPostingReply(true);
-    commentsApi
-        .create(postId, { content, parent_comment_id: comment.id })
-        .then((created) => {
-          setReplies((prev) => [...prev, created]);
-          setReplyDraft("");
-          setFormOpen(false);
-        })
-        .catch((e: unknown) => setReplyError(describeCommentError(e)))
-        .finally(() => setPostingReply(false));
-  }, [postId, replyDraft, comment.id]);
+    run(
+      () => commentsApi.create(postId, { content, parent_comment_id: comment.id }),
+      {
+        optimistic: () => setReplies((prev) => [...prev, optimistic]),
+        // 列表语义回滚：仅移除本条临时回复，不影响其它回复
+        rollback: () => setReplies((prev) => prev.filter((r) => r.id !== tempId)),
+        onOk: (created) => {
+          setPostingReply(false);
+          setReplyCount((n) => n + 1);
+          setReplies((prev) => prev.map((r) => (r.id === tempId ? (created as CommentView) : r)));
+        },
+        onError: (err) => {
+          setPostingReply(false);
+          return describeCommentError(err);
+        },
+      },
+      { mode: "list" },
+    );
+    setReplyDraft("");
+    setFormOpen(false);
+  }, [postId, replyDraft, comment.id, currentUserId, currentUserName, run]);
 
   const remove = useCallback(() => {
     if (!comment.id) return;
     setDeleting(true);
     commentsApi
-        .remove(comment.id)
-        .then(() => setDeleted(true))
-        .catch((e: unknown) => setItemError(describeCommentError(e)))
-        .finally(() => setDeleting(false));
+      .remove(comment.id)
+      .then(() => setDeleted(true))
+      .catch((e: unknown) => setItemError(describeCommentError(e)))
+      .finally(() => setDeleting(false));
   }, [comment.id]);
 
   if (isDeleted) {
@@ -98,10 +130,23 @@ export function CommentItem({
   }
 
   const canDelete = !!currentUserId && currentUserId === comment.user_id;
-  const replyCount = comment.reply_count ?? 0;
 
   return (
-    <li className="rounded-lg border border-slate-100 bg-white px-4 py-3">
+    <li
+      className={`rounded-lg border border-slate-100 bg-white px-4 py-3${
+        comment.pending ? " opacity-60" : ""
+      }`}
+    >
+      {alert && (
+        <Alert variant="destructive" aria-live="polite" className="mb-2">
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>{alert}</span>
+            <Button variant="ghost" size="sm" onClick={dismissAlert} aria-label="关闭提示">
+              <X className="h-4 w-4" />
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="flex items-start gap-3">
         <div
           aria-hidden="true"

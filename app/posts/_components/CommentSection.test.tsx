@@ -39,12 +39,10 @@ const MOCK_USER = {
 const COMMENT = {
   id: "c1",
   post_id: "p1",
-  parent_comment_id: null,
   user_id: "u1",
   author_name: "Alice",
   content: "第一条评论",
   created_at: "2024-05-01T10:00:00Z",
-  deleted: false,
   reply_count: 0,
 };
 
@@ -68,9 +66,7 @@ describe("CommentSection", () => {
     vi.mocked(commentsApi.list).mockResolvedValue({
       content: [COMMENT],
       last: true,
-      page: 0,
       size: 20,
-      total_elements: 1,
     });
     renderWithSession(true);
 
@@ -81,9 +77,7 @@ describe("CommentSection", () => {
     vi.mocked(commentsApi.list).mockResolvedValue({
       content: [],
       last: true,
-      page: 0,
       size: 20,
-      total_elements: 0,
     });
     renderWithSession(true);
 
@@ -94,9 +88,7 @@ describe("CommentSection", () => {
     vi.mocked(commentsApi.list).mockResolvedValue({
       content: [COMMENT],
       last: true,
-      page: 0,
       size: 20,
-      total_elements: 1,
     });
     vi.mocked(commentsApi.create).mockResolvedValue({
       ...COMMENT,
@@ -135,18 +127,14 @@ describe("CommentSection", () => {
     vi.mocked(commentsApi.list).mockResolvedValue({
       content: [COMMENT],
       last: true,
-      page: 0,
       size: 20,
-      total_elements: 1,
     });
     vi.mocked(commentsApi.replies).mockResolvedValue({
       content: [
         { ...COMMENT, id: "r1", content: "回复内容", parent_comment_id: "c1", user_id: "u2", author_name: "Bob" },
       ],
       last: true,
-      page: 0,
       size: 20,
-      total_elements: 1,
     });
     const user = userEvent.setup();
     renderWithSession(true);
@@ -155,5 +143,45 @@ describe("CommentSection", () => {
     await user.click(screen.getByRole("button", { name: "回复" }));
     expect(commentsApi.replies).toHaveBeenCalledWith("c1", 0, 20);
     expect(await screen.findByText(/回复内容/)).toBeInTheDocument();
+  });
+
+  it("发布评论先乐观插入，不等待网络", async () => {
+    vi.mocked(commentsApi.list).mockResolvedValue({
+      content: [],
+      last: true,
+      size: 20,
+    });
+    vi.mocked(commentsApi.create).mockReturnValue(new Promise(() => {})); // 不 resolve
+    const user = userEvent.setup();
+    renderWithSession(true);
+
+    await screen.findByText("还没有评论，来抢沙发吧");
+    await user.type(screen.getByLabelText(/发表评论/), "我来了");
+    await user.click(screen.getByRole("button", { name: "发布" }));
+
+    // 乐观：立即出现在列表（即使 create 未返回）
+    expect(screen.getByText("我来了")).toBeInTheDocument();
+  });
+
+  it("发布失败回滚并提示", async () => {
+    vi.mocked(commentsApi.list).mockResolvedValue({
+      content: [],
+      last: true,
+      size: 20,
+    });
+    vi.mocked(commentsApi.create).mockRejectedValue(new Error("boom"));
+    const user = userEvent.setup();
+    renderWithSession(true);
+
+    await screen.findByText("还没有评论，来抢沙发吧");
+    await user.type(screen.getByLabelText(/发表评论/), "我来了");
+    await user.click(screen.getByRole("button", { name: "发布" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveAttribute("aria-live", "polite");
+    expect(alert).toHaveTextContent("服务异常");
+    // 回滚：评论消失，回到空态
+    await waitFor(() => expect(screen.queryByText("我来了")).not.toBeInTheDocument());
+    expect(screen.getByText("还没有评论，来抢沙发吧")).toBeInTheDocument();
   });
 });

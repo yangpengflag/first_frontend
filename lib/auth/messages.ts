@@ -20,6 +20,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   RATE_LIMITED: "操作过于频繁，请稍后再试",
   POST_NOT_FOUND: "内容不存在或已下架",
   NOT_POST_AUTHOR: "你没有权限操作该内容",
+  COMMENT_NOT_FOUND: "评论不存在或已删除，请刷新",
+  INVALID_PARENT_COMMENT: "回复对象无效",
   INTERNAL_ERROR: "服务异常，请稍后重试",
 };
 

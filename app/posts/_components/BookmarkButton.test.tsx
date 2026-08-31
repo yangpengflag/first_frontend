@@ -91,4 +91,44 @@ describe("BookmarkButton", () => {
     await user.click(btn);
     expect(mockPush).toHaveBeenCalledWith("/login?redirect=/posts/p1");
   });
+
+  it("点击后立即乐观切换图标态，不等待网络", async () => {
+    vi.mocked(bookmarksApi.status).mockResolvedValue({ post_id: "p1", bookmarked: false });
+    vi.mocked(bookmarksApi.toggle).mockReturnValue(new Promise(() => {}));
+    const user = userEvent.setup();
+    renderWithSession(true);
+
+    await user.click(await screen.findByRole("button", { name: /收藏/ }));
+    // 乐观：立即变为已收藏
+    expect(screen.getByRole("button", { name: /已收藏/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("切换失败回滚并显示瞬时提示", async () => {
+    vi.mocked(bookmarksApi.status).mockResolvedValue({ post_id: "p1", bookmarked: false });
+    vi.mocked(bookmarksApi.toggle).mockRejectedValue(new Error("boom"));
+    const user = userEvent.setup();
+    renderWithSession(true);
+
+    await user.click(await screen.findByRole("button", { name: /收藏/ }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveAttribute("aria-live", "polite");
+    expect(alert).toHaveTextContent("服务异常");
+    // 回滚：仍为未收藏
+    await waitFor(() => expect(screen.getByRole("button", { name: /收藏/ })).toBeInTheDocument());
+  });
+
+  it("切换响应漏返 bookmarked 时保留乐观态（不误显示未收藏）", async () => {
+    vi.mocked(bookmarksApi.status).mockResolvedValue({ post_id: "p1", bookmarked: false });
+    vi.mocked(bookmarksApi.toggle).mockResolvedValue({ post_id: "p1", bookmarked: undefined });
+    const user = userEvent.setup();
+    renderWithSession(true);
+
+    await user.click(await screen.findByRole("button", { name: /收藏/ }));
+
+    // 乐观切到已收藏后，响应漏返字段不应回退为未收藏
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /已收藏/ })).toHaveAttribute("aria-pressed", "true"),
+    );
+  });
 });
