@@ -10,10 +10,10 @@
  * SpotDetail 无需再查城市。选项列表与"相关攻略"占位仍取自 mock，待 P6
  * post-location-tagging 接入真实聚合后替换。
  */
-import { CITIES_MOCK, SPOTS_MOCK, RELATED_POSTS_MOCK } from "./mocks";
+import { CITIES_MOCK, SPOTS_MOCK } from "./mocks";
 import type { City, Spot, RelatedPost, SpotCategory, PageResult } from "./types";
 import { SPOT_CATEGORIES } from "./labels";
-import { fetchCities, fetchSpots, fetchCityBySlug, fetchSpotBySlug } from "./client";
+import { fetchCities, fetchSpots, fetchCityBySlug, fetchSpotBySlug, fetchRelatedPosts } from "./client";
 
 /** 一次拉全量用于本地筛选/排序/分页（数据集小，演示阶段可接受）。 */
 const ALL = 1000;
@@ -54,16 +54,22 @@ export async function getSpotsByCity(citySlug: string): Promise<Spot[]> {
     .sort((a, b) => b.viewCount - a.viewCount);
 }
 
-/** 详情页"相关攻略"占位（P6 post-location-tagging 后切换为真实聚合，按 spot slug 查询）。 */
-export function getRelatedPostsForSpot(_slug: string): RelatedPost[] {
-  void _slug; // 占位期未使用；P6 接入真实聚合时按 slug 查询
-  return RELATED_POSTS_MOCK;
+/** 详情页"相关攻略"：按 spot slug 聚合（POST /api/posts?spotId=）。失败则降级为空（不影响详情页）。 */
+export async function getRelatedPostsForSpot(slug: string): Promise<RelatedPost[]> {
+  try {
+    return await fetchRelatedPosts({ spotId: slug });
+  } catch {
+    return [];
+  }
 }
 
-/** 城市详情页"相关攻略"占位（同上）。 */
-export function getRelatedPostsForCity(_slug: string): RelatedPost[] {
-  void _slug; // 占位期未使用；P6 接入真实聚合时按 slug 查询
-  return RELATED_POSTS_MOCK;
+/** 城市详情页"相关攻略"：按 city slug 聚合（GET /api/posts?cityId=）。失败则降级为空。 */
+export async function getRelatedPostsForCity(slug: string): Promise<RelatedPost[]> {
+  try {
+    return await fetchRelatedPosts({ cityId: slug });
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------

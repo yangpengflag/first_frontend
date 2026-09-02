@@ -187,6 +187,22 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "cityId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spotId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1302,6 +1318,19 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "cityId": {
+            "type": "string"
+          },
+          "spotIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 0
+            },
+            "maxItems": 20,
+            "minItems": 0
           }
         }
       },
@@ -1353,6 +1382,15 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "city_id": {
+            "type": "string"
+          },
+          "spot_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -1388,6 +1426,19 @@
               "DRAFT",
               "PUBLISHED"
             ]
+          },
+          "cityId": {
+            "type": "string"
+          },
+          "spotIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 0
+            },
+            "maxItems": 20,
+            "minItems": 0
           }
         },
         "required": [
@@ -1812,6 +1863,15 @@
           "bookmark_count": {
             "type": "integer",
             "format": "int64"
+          },
+          "city_id": {
+            "type": "string"
+          },
+          "spot_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -1993,6 +2053,10 @@
           "last": {
             "type": "boolean"
           },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -2009,10 +2073,6 @@
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
@@ -2210,6 +2270,10 @@
           "last": {
             "type": "boolean"
           },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -2226,10 +2290,6 @@
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"

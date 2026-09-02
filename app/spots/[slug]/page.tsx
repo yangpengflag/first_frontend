@@ -13,6 +13,6 @@ export default async function SpotPage({ params }: { params: { slug: string } })
   if (!spot) notFound();
 
   const neighbors = await getSpotNeighbors(params.slug);
-  const related = getRelatedPostsForSpot(params.slug);
+  const related = await getRelatedPostsForSpot(params.slug);
   return <SpotDetail spot={spot} neighbors={neighbors} related={related} />;
 }

@@ -13,6 +13,6 @@ export default async function CityPage({ params }: { params: { slug: string } })
   if (!city) notFound();
 
   const spots = await getSpotsByCity(params.slug);
-  const related = getRelatedPostsForCity(params.slug);
+  const related = await getRelatedPostsForCity(params.slug);
   return <CityDetail city={city} spots={spots} related={related} />;
 }

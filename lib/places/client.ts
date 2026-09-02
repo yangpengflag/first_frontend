@@ -14,7 +14,7 @@
  */
 import { fetchFromBackend } from "@/lib/backend";
 
-import type { City, PageResult, Spot, SpotCategory } from "./types";
+import type { City, PageResult, Spot, SpotCategory, RelatedPost } from "./types";
 
 /** 后端城市出网形状（snake_case + 顶层 request_id）。仅声明用到的字段。 */
 interface RawCity {
@@ -217,4 +217,34 @@ export function fetchSpotBySlug(slug: string): Promise<Spot | null> {
   return nullOn404(() =>
     fetchFromBackend<RawSpot>(`/api/spots/${encodeURIComponent(slug)}`).then(mapSpot)
   );
+}
+
+// ===== 相关攻略（按地点聚合，post-location-tagging P6） =====
+
+/** 后端帖子列表项出网形状（仅取相关攻略所需字段）。 */
+interface RawPostSummary {
+  id: string;
+  title: string;
+}
+
+function mapRelatedPost(raw: RawPostSummary): RelatedPost {
+  return { id: raw.id, title: raw.title, slug: "" };
+}
+
+export interface RelatedPostQuery {
+  cityId?: string;
+  spotId?: string;
+  size?: number;
+}
+
+export async function fetchRelatedPosts(query: RelatedPostQuery = {}): Promise<RelatedPost[]> {
+  const data = await fetchFromBackend<RawList<RawPostSummary>>(
+    `/api/posts${buildQuery({
+      cityId: query.cityId,
+      spotId: query.spotId,
+      sort: "latest",
+      size: query.size ?? 6,
+    })}`
+  );
+  return data.items.map(mapRelatedPost);
 }

@@ -527,6 +527,8 @@ export interface components {
             tags?: string[];
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED";
+            cityId?: string;
+            spotIds?: string[];
         };
         PostResponse: {
             request_id?: string;
@@ -546,6 +548,8 @@ export interface components {
             created_at?: string;
             /** Format: date-time */
             updated_at?: string;
+            city_id?: string;
+            spot_ids?: string[];
         };
         CreatePostRequest: {
             title: string;
@@ -554,6 +558,8 @@ export interface components {
             tags?: string[];
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED";
+            cityId?: string;
+            spotIds?: string[];
         };
         VoteRequest: {
             /** @enum {string} */
@@ -698,6 +704,8 @@ export interface components {
             up_vote_count?: number;
             /** Format: int64 */
             bookmark_count?: number;
+            city_id?: string;
+            spot_ids?: string[];
         };
         SpotDetail: {
             request_id?: string;
@@ -764,13 +772,13 @@ export interface components {
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
+            numberOfElements?: number;
+            /** Format: int32 */
             size?: number;
             content?: components["schemas"]["CommentResponse"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
@@ -845,13 +853,13 @@ export interface components {
             first?: boolean;
             last?: boolean;
             /** Format: int32 */
+            numberOfElements?: number;
+            /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BookmarkSummary"][];
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            /** Format: int32 */
-            numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
@@ -939,6 +947,8 @@ export interface operations {
                 cursor?: string;
                 page?: number;
                 size?: number;
+                cityId?: string;
+                spotId?: string;
             };
             header?: never;
             path?: never;
