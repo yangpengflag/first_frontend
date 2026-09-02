@@ -31,6 +31,7 @@ import { AuthApiError } from "@/lib/auth/types";
 export function RegisterForm() {
   const [phase, setPhase] = useState<"editing" | "submitting" | "sent">("editing");
   const [formError, setFormError] = useState<string | null>(null);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -54,6 +55,16 @@ export function RegisterForm() {
     }
   }
 
+  async function handleResend() {
+    setResendState("sending");
+    try {
+      await authApi.resendVerification(form.getValues("email"));
+      setResendState("sent");
+    } catch {
+      setResendState("idle");
+    }
+  }
+
   if (phase === "sent") {
     return (
       <Card>
@@ -64,10 +75,26 @@ export function RegisterForm() {
             发送验证邮件。请点击邮件中的链接完成验证后再登录。
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Button asChild className="w-full">
             <Link href="/login">返回登录</Link>
           </Button>
+          <div className="text-center">
+            <p className="mb-2 text-sm text-muted-foreground">没收到邮件？</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResend}
+              disabled={resendState !== "idle"}
+            >
+              {resendState === "sent"
+                ? "已重新发送"
+                : resendState === "sending"
+                  ? "发送中…"
+                  : "重新发送验证邮件"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

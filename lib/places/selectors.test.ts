@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { fetchRelatedPosts } from "./client";
 import {
   filterCities,
   filterSpots,
@@ -8,6 +9,12 @@ import {
   listCategories,
   listSpotTags,
 } from "./index";
+
+// 仅替换真实聚合调用为可控 mock；列表/详情选择器仍走真实 client（fetchCities/fetchSpots）。
+vi.mock("./client", async () => {
+  const actual = await vi.importActual<typeof import("./client")>("./client");
+  return { ...actual, fetchRelatedPosts: vi.fn() };
+});
 
 describe("filterCities", () => {
   it("默认按 name 升序分页（size 6 → 8 城分 2 页）", async () => {
@@ -109,8 +116,13 @@ describe("option lists", () => {
   });
 });
 
-describe("related posts placeholder", () => {
-  it("getRelatedPostsForCity 返回占位数据", () => {
-    expect(getRelatedPostsForCity("hangzhou")).toHaveLength(2);
+describe("related posts aggregation", () => {
+  it("getRelatedPostsForCity 聚合城市相关攻略", async () => {
+    vi.mocked(fetchRelatedPosts).mockResolvedValue([
+      { id: "1", title: "A", slug: "a" },
+      { id: "2", title: "B", slug: "b" },
+    ]);
+    const posts = await getRelatedPostsForCity("hangzhou");
+    expect(posts).toHaveLength(2);
   });
 });

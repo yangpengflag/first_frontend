@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { tokenStore } from "@/lib/auth/tokens";
@@ -38,6 +38,20 @@ function Probe() {
     <div>
       <span data-testid="status">{status}</span>
       {user && <span data-testid="name">{user.display_name}</span>}
+    </div>
+  );
+}
+
+/** 带 setAuthenticated 触发按钮的探针，用于「运行时登录」回归。 */
+function ProbeWithActions({ loginUser }: { loginUser: UserResponse }) {
+  const { status, user, setAuthenticated } = useAuthSession();
+  return (
+    <div>
+      <span data-testid="status">{status}</span>
+      {user && <span data-testid="name">{user.display_name}</span>}
+      <button data-testid="login-btn" onClick={() => setAuthenticated(loginUser)}>
+        trigger login
+      </button>
     </div>
   );
 }
@@ -116,5 +130,23 @@ describe("AuthSessionProvider", () => {
     expect(window.location.search).not.toContain("super-secret-token");
     expect(spy).not.toHaveBeenCalledWith(expect.stringContaining("super-secret-token"));
     spy.mockRestore();
+  });
+
+  it("1.6 setAuthenticated 立即把会话切到已登录态，且不重新调 me", async () => {
+    // 模拟「登录页完成 authApi.login 后 router.push」：Provider 已挂载且
+    // bootstrap 跑完（无 token → unauthenticated），此时只能靠显式
+    // setAuthenticated 翻状态，不能再依赖 bootstrap（依赖 [] 不重跑）。
+    renderWithProvider(<ProbeWithActions loginUser={user} />);
+
+    expect(await screen.findByTestId("status")).toHaveTextContent("unauthenticated");
+    expect(me).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId("login-btn"));
+
+    expect(await screen.findByTestId("status")).toHaveTextContent("authenticated");
+    expect(screen.getByTestId("name")).toHaveTextContent("Tester");
+    // 关键：翻状态完全不走 me()——证明 setAuthenticated 是 local state sync，
+    // 不依赖后端，省一次往返也避免 bootstrap race
+    expect(me).not.toHaveBeenCalled();
   });
 });

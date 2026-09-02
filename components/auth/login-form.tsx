@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authApi } from "@/lib/auth/api";
 import { describeAuthError } from "@/lib/auth/messages";
+import { useAuthSession } from "@/lib/auth/session";
 import { loginSchema, type LoginInput } from "@/lib/auth/schemas";
 import { AuthApiError, retryAfterSecondsOf } from "@/lib/auth/types";
 
@@ -33,6 +34,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
+  const { setAuthenticated } = useAuthSession();
 
   const [phase, setPhase] = useState<"editing" | "submitting">("editing");
   const [formError, setFormError] = useState<string | null>(null);
@@ -49,7 +51,10 @@ export function LoginForm() {
     setNeedsVerification(false);
     setPhase("submitting");
     try {
-      await authApi.login(values);
+      const result = await authApi.login(values);
+      // 把内存会话态切到 authenticated，避免 router.push 软跳转导致
+      // AuthSessionProvider 不重挂载、bootstrap 不重跑，NavBar 永远卡在「登录/注册」
+      setAuthenticated(result.user);
       router.push(redirectTo);
     } catch (error) {
       if (error instanceof AuthApiError) {

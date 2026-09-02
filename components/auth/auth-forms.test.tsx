@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render as baseRender, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,6 +11,7 @@ import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { ResetPasswordForm } from "./reset-password-form";
 import { VerifyStatus } from "./verify-status";
+import { AuthSessionProvider } from "@/lib/auth/session";
 
 vi.mock("@/lib/auth/api", () => ({
   authApi: {
@@ -30,6 +32,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 const mocked = vi.mocked(authApi);
+
+/** 表单组件依赖 {@link useAuthSession}，统一在 Provider 内渲染。 */
+function render(ui: ReactElement) {
+  return baseRender(<AuthSessionProvider>{ui}</AuthSessionProvider>);
+}
 
 beforeEach(() => {
   vi.clearAllMocks();

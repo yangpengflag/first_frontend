@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { tokenStore } from "@/lib/auth/tokens";
-import { AuthSessionProvider } from "@/lib/auth/session";
+import { AuthSessionProvider, useAuthSession } from "@/lib/auth/session";
+import type { UserResponse } from "@/lib/auth/types";
 
 import { NavBar } from "./nav-bar";
 
@@ -20,7 +21,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
 }));
 
-const user = {
+const user: UserResponse = {
   id: "u-1",
   email: "a@b.com",
   display_name: "Tester",
@@ -67,5 +68,35 @@ describe("NavBar", () => {
     // 首帧：loading → 不渲染昵称，也不渲染 登录/注册
     expect(screen.queryByText("Tester")).not.toBeInTheDocument();
     expect(screen.queryByText("登录")).not.toBeInTheDocument();
+  });
+
+  it("3.4 运行时 setAuthenticated 后 NavBar 立即从'登录/注册'切到昵称+登出", async () => {
+    // 回归本次 bug：登录页 authApi.login + router.push 是 App Router 软跳转，
+    // Provider 不重挂载、bootstrap 不重跑；如果不在 login-form 显式
+    // setAuthenticated，NavBar 永远卡在「登录/注册」。
+    function PageWithControls() {
+      const { setAuthenticated } = useAuthSession();
+      return (
+        <>
+          <NavBar />
+          <button data-testid="login-btn" onClick={() => setAuthenticated(user)}>
+            trigger
+          </button>
+        </>
+      );
+    }
+    renderWithProvider(<PageWithControls />);
+
+    // 初始未登录
+    expect(await screen.findByText("登录")).toBeInTheDocument();
+    expect(screen.getByText("注册")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("login-btn"));
+
+    // 不刷新页面、不重挂载 Provider，NavBar 立即反映
+    expect(await screen.findByText("Tester")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
+    expect(screen.queryByText("登录")).not.toBeInTheDocument();
+    expect(screen.queryByText("注册")).not.toBeInTheDocument();
   });
 });

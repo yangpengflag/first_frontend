@@ -22,6 +22,16 @@ export interface AuthSession {
   status: SessionStatus;
   /** 登出：调用后端后清除本地令牌并跳转登录页。 */
   logout: () => Promise<void>;
+  /**
+   * 把当前会话标记为已认证。
+   *
+   * <p>仅更新内存态——令牌已由 {@link authApi.login} 写入 localStorage，
+   * 此处不重复写。存在的目的：登录页完成 {@code authApi.login} 后
+   * {@code router.push} 是 App Router 软跳转，{@link AuthSessionProvider}
+   * 不会重挂载，{@code bootstrap}（{@code useEffect([])}）也不会重跑；
+   * 调用本方法让 NavBar 立即反映已登录态，避免「刷新一下才显示头像」。
+   */
+  setAuthenticated: (user: UserResponse) => void;
 }
 
 const AuthSessionContext = createContext<AuthSession | null>(null);
@@ -85,9 +95,14 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
+  const setAuthenticated = useCallback((next: UserResponse) => {
+    setUser(next);
+    setStatus("authenticated");
+  }, []);
+
   const value = useMemo<AuthSession>(
-    () => ({ user, status, logout }),
-    [user, status, logout]
+    () => ({ user, status, logout, setAuthenticated }),
+    [user, status, logout, setAuthenticated]
   );
 
   return (
