@@ -269,6 +269,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 景点列表
+         * @description 支持 city / category / tag / q 筛选；sort=popular（默认，view_count 降序）/ hidden（小众优先）；page/size 分页。
+         */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spots/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 景点详情
+         * @description 返回景点信息、周边 POI 与相关攻略占位；访问计数异步 +1。
+         */
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{postId}/vote/stats": {
         parameters: {
             query?: never;
@@ -349,6 +389,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 城市列表
+         * @description 按 name 升序分页返回全部存活城市（page/size 分页）。
+         */
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cities/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 城市详情
+         * @description 返回城市介绍、Top POI 与相关攻略占位。
+         */
+        get: operations["get_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bookmarks": {
         parameters: {
             query?: never;
@@ -360,7 +440,7 @@ export interface paths {
          * 我的收藏列表
          * @description 需鉴权；全量返回（失效帖子以 available=false 占位），按收藏时间倒序。
          */
-        get: operations["list_2"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -555,17 +635,47 @@ export interface components {
         ForgotPasswordRequest: {
             email: string;
         };
-        PostListResponse: {
+        SpotListResponse: {
             request_id?: string;
-            items?: components["schemas"]["PostSummary"][];
-            next_cursor?: string;
-            has_more?: boolean;
+            items?: components["schemas"]["SpotSummary"][];
             /** Format: int32 */
             page?: number;
             /** Format: int32 */
             size?: number;
             /** Format: int64 */
             total?: number;
+            has_more?: boolean;
+        };
+        SpotSummary: {
+            request_id?: string;
+            slug?: string;
+            name_zh?: string;
+            name_en?: string;
+            city_slug?: string;
+            category?: string;
+            tags?: string[];
+            level?: string;
+            address_en?: string;
+            address_zh?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lng?: number;
+            cover_image_url?: string;
+            gallery_urls?: string[];
+            summary_en?: string;
+            summary_zh?: string;
+            opening_hours?: string;
+            ticket_info?: string;
+            visit_duration?: string;
+            /** Format: int64 */
+            view_count?: number;
+            /** Format: int64 */
+            post_count?: number;
+            /** Format: double */
+            rating?: number;
+            featured?: boolean;
+            hidden_gem?: boolean;
         };
         PostSummary: {
             request_id?: string;
@@ -588,6 +698,53 @@ export interface components {
             up_vote_count?: number;
             /** Format: int64 */
             bookmark_count?: number;
+        };
+        SpotDetail: {
+            request_id?: string;
+            slug?: string;
+            name_zh?: string;
+            name_en?: string;
+            city_slug?: string;
+            category?: string;
+            tags?: string[];
+            level?: string;
+            address_en?: string;
+            address_zh?: string;
+            /** Format: double */
+            lat?: number;
+            /** Format: double */
+            lng?: number;
+            cover_image_url?: string;
+            gallery_urls?: string[];
+            summary_en?: string;
+            summary_zh?: string;
+            opening_hours?: string;
+            ticket_info?: string;
+            visit_duration?: string;
+            /** Format: int64 */
+            view_count?: number;
+            /** Format: int64 */
+            post_count?: number;
+            /** Format: double */
+            rating?: number;
+            featured?: boolean;
+            hidden_gem?: boolean;
+            description_en?: string;
+            description_zh?: string;
+            related_posts?: components["schemas"]["PostSummary"][];
+            nearby_spots?: components["schemas"]["SpotSummary"][];
+        };
+        PostListResponse: {
+            request_id?: string;
+            items?: components["schemas"]["PostSummary"][];
+            next_cursor?: string;
+            has_more?: boolean;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            total?: number;
         };
         VoteStatsResponse: {
             request_id?: string;
@@ -612,20 +769,20 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
         PageableObject: {
             /** Format: int64 */
             offset?: number;
             sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
             /** Format: int32 */
             pageSize?: number;
             /** Format: int32 */
             pageNumber?: number;
-            paged?: boolean;
             unpaged?: boolean;
         };
         SortObject: {
@@ -638,6 +795,41 @@ export interface components {
             /** Format: uuid */
             post_id?: string;
             bookmarked?: boolean;
+        };
+        CityListResponse: {
+            request_id?: string;
+            items?: components["schemas"]["CitySummary"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            total?: number;
+            has_more?: boolean;
+        };
+        CitySummary: {
+            request_id?: string;
+            slug?: string;
+            name?: string;
+            name_zh?: string;
+            cover_image?: string;
+            description?: string;
+            best_season?: string;
+            /** Format: int64 */
+            spot_count?: number;
+        };
+        CityDetail: {
+            request_id?: string;
+            slug?: string;
+            name?: string;
+            name_zh?: string;
+            cover_image?: string;
+            description?: string;
+            best_season?: string;
+            /** Format: int64 */
+            spot_count?: number;
+            top_spots?: components["schemas"]["SpotSummary"][];
+            related_posts?: components["schemas"]["PostSummary"][];
         };
         BookmarkSummary: {
             /** Format: uuid */
@@ -658,9 +850,9 @@ export interface components {
             /** Format: int32 */
             number?: number;
             sort?: components["schemas"]["SortObject"];
-            pageable?: components["schemas"]["PageableObject"];
             /** Format: int32 */
             numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
             empty?: boolean;
         };
     };
@@ -1196,6 +1388,56 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: {
+                city?: string;
+                category?: string;
+                tag?: string;
+                q?: string;
+                sort?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpotListResponse"];
+                };
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpotDetail"];
+                };
+            };
+        };
+    };
     stats: {
         parameters: {
             query?: never;
@@ -1290,7 +1532,52 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CityListResponse"];
+                };
+            };
+        };
+    };
+    get_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CityDetail"];
+                };
+            };
+        };
+    };
+    list_4: {
         parameters: {
             query?: {
                 page?: number;

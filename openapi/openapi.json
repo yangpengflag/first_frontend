@@ -12,6 +12,10 @@
   ],
   "tags": [
     {
+      "name": "景点 POI",
+      "description": "中国具体可游览 POI 的公开列表与详情（含周边 POI 与相关攻略占位）。"
+    },
+    {
       "name": "健康检查",
       "description": "服务可用性探针"
     },
@@ -34,6 +38,10 @@
     {
       "name": "帖子",
       "description": "旅行攻略（Story）的发布 / 编辑 / 公开列表 / 详情 / 我的帖子。\n所有错误响应使用统一信封 {\"error\":{\"code\":...,\"message\":...}}。"
+    },
+    {
+      "name": "城市目的地",
+      "description": "中国城市目的地的公开列表与详情（含 Top POI 与相关攻略占位）。"
     }
   ],
   "paths": {
@@ -723,6 +731,123 @@
         }
       }
     },
+    "/api/spots": {
+      "get": {
+        "tags": [
+          "景点 POI"
+        ],
+        "summary": "景点列表",
+        "description": "支持 city / category / tag / q 筛选；sort=popular（默认，view_count 降序）/ hidden（小众优先）；page/size 分页。",
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "popular"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/spots/{slug}": {
+      "get": {
+        "tags": [
+          "景点 POI"
+        ],
+        "summary": "景点详情",
+        "description": "返回景点信息、周边 POI 与相关攻略占位；访问计数异步 +1。",
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/posts/{postId}/vote/stats": {
       "get": {
         "tags": [
@@ -894,6 +1019,82 @@
         }
       }
     },
+    "/api/cities": {
+      "get": {
+        "tags": [
+          "城市目的地"
+        ],
+        "summary": "城市列表",
+        "description": "按 name 升序分页返回全部存活城市（page/size 分页）。",
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cities/{slug}": {
+      "get": {
+        "tags": [
+          "城市目的地"
+        ],
+        "summary": "城市详情",
+        "description": "返回城市介绍、Top POI 与相关攻略占位。",
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CityDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bookmarks": {
       "get": {
         "tags": [
@@ -901,7 +1102,7 @@
         ],
         "summary": "我的收藏列表",
         "description": "需鉴权；全量返回（失效帖子以 available=false 占位），按收藏时间倒序。",
-        "operationId": "list_2",
+        "operationId": "list_4",
         "parameters": [
           {
             "name": "page",
@@ -1441,7 +1642,7 @@
           "email"
         ]
       },
-      "PostListResponse": {
+      "SpotListResponse": {
         "type": "object",
         "properties": {
           "request_id": {
@@ -1450,14 +1651,8 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PostSummary"
+              "$ref": "#/components/schemas/SpotSummary"
             }
-          },
-          "next_cursor": {
-            "type": "string"
-          },
-          "has_more": {
-            "type": "boolean"
           },
           "page": {
             "type": "integer",
@@ -1470,6 +1665,97 @@
           "total": {
             "type": "integer",
             "format": "int64"
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpotSummary": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name_zh": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          },
+          "city_slug": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "level": {
+            "type": "string"
+          },
+          "address_en": {
+            "type": "string"
+          },
+          "address_zh": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lng": {
+            "type": "number",
+            "format": "double"
+          },
+          "cover_image_url": {
+            "type": "string"
+          },
+          "gallery_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary_en": {
+            "type": "string"
+          },
+          "summary_zh": {
+            "type": "string"
+          },
+          "opening_hours": {
+            "type": "string"
+          },
+          "ticket_info": {
+            "type": "string"
+          },
+          "visit_duration": {
+            "type": "string"
+          },
+          "view_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "post_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "hidden_gem": {
+            "type": "boolean"
           }
         }
       },
@@ -1524,6 +1810,144 @@
             "format": "int64"
           },
           "bookmark_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SpotDetail": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name_zh": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          },
+          "city_slug": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "level": {
+            "type": "string"
+          },
+          "address_en": {
+            "type": "string"
+          },
+          "address_zh": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "format": "double"
+          },
+          "lng": {
+            "type": "number",
+            "format": "double"
+          },
+          "cover_image_url": {
+            "type": "string"
+          },
+          "gallery_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summary_en": {
+            "type": "string"
+          },
+          "summary_zh": {
+            "type": "string"
+          },
+          "opening_hours": {
+            "type": "string"
+          },
+          "ticket_info": {
+            "type": "string"
+          },
+          "visit_duration": {
+            "type": "string"
+          },
+          "view_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "post_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "hidden_gem": {
+            "type": "boolean"
+          },
+          "description_en": {
+            "type": "string"
+          },
+          "description_zh": {
+            "type": "string"
+          },
+          "related_posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
+          },
+          "nearby_spots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpotSummary"
+            }
+          }
+        }
+      },
+      "PostListResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
+          },
+          "next_cursor": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
             "type": "integer",
             "format": "int64"
           }
@@ -1586,12 +2010,12 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -1608,6 +2032,9 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
+          "paged": {
+            "type": "boolean"
+          },
           "pageSize": {
             "type": "integer",
             "format": "int32"
@@ -1615,9 +2042,6 @@
           "pageNumber": {
             "type": "integer",
             "format": "int32"
-          },
-          "paged": {
-            "type": "boolean"
           },
           "unpaged": {
             "type": "boolean"
@@ -1650,6 +2074,107 @@
           },
           "bookmarked": {
             "type": "boolean"
+          }
+        }
+      },
+      "CityListResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CitySummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CitySummary": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_zh": {
+            "type": "string"
+          },
+          "cover_image": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "best_season": {
+            "type": "string"
+          },
+          "spot_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CityDetail": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_zh": {
+            "type": "string"
+          },
+          "cover_image": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "best_season": {
+            "type": "string"
+          },
+          "spot_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "top_spots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpotSummary"
+            }
+          },
+          "related_posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostSummary"
+            }
           }
         }
       },
@@ -1702,12 +2227,12 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"

@@ -1,5 +1,7 @@
 import { HttpResponse, http } from "msw";
 
+import { CITIES_MOCK, SPOTS_MOCK } from "@/lib/places/mocks";
+import type { City, Spot } from "@/lib/places/types";
 import type { components } from "@/lib/api.generated";
 
 type UserResponse = components["schemas"]["UserResponse"];
@@ -93,4 +95,96 @@ export const handlers = [
   http.get("*/api/hello", () =>
       HttpResponse.json({ message: "Hello from Spring Boot!", status: "ok" })
   ),
+
+  // ===== 景点模块（api-spots）mock 后端 =====
+  // 形状由后端出网契约约束（snake_case），前端 client.ts 负责适配为 camelCase。
+  http.get("*/api/cities", () => {
+    const items = CITIES_MOCK.map(cityToRaw);
+    return HttpResponse.json({
+      request_id: "mock-request-id",
+      items,
+      page: 1,
+      size: items.length,
+      total: items.length,
+      has_more: false,
+    });
+  }),
+
+  http.get("*/api/cities/:slug", ({ params }) => {
+    const city = CITIES_MOCK.find((c) => c.slug === params.slug);
+    if (!city) {
+      return HttpResponse.json(
+          { error: { code: "CITY_NOT_FOUND", message: "City not found." } },
+          { status: 404 }
+      );
+    }
+    return HttpResponse.json(cityToRaw(city));
+  }),
+
+  http.get("*/api/spots", () => {
+    const items = SPOTS_MOCK.map(spotToRaw);
+    return HttpResponse.json({
+      request_id: "mock-request-id",
+      items,
+      page: 1,
+      size: items.length,
+      total: items.length,
+      has_more: false,
+    });
+  }),
+
+  http.get("*/api/spots/:slug", ({ params }) => {
+    const spot = SPOTS_MOCK.find((s) => s.slug === params.slug);
+    if (!spot) {
+      return HttpResponse.json(
+          { error: { code: "SPOT_NOT_FOUND", message: "Spot not found." } },
+          { status: 404 }
+      );
+    }
+    return HttpResponse.json(spotToRaw(spot));
+  }),
 ];
+
+function cityToRaw(c: City) {
+  return {
+    request_id: "mock-request-id",
+    slug: c.slug,
+    name: c.name,
+    name_zh: c.nameZh,
+    cover_image: c.coverImage,
+    description: c.description,
+    best_season: c.bestSeason ?? null,
+    spot_count: c.spotCount,
+  };
+}
+
+function spotToRaw(s: Spot) {
+  return {
+    request_id: "mock-request-id",
+    slug: s.slug,
+    name_zh: s.nameZh,
+    name_en: s.nameEn,
+    city_slug: s.citySlug,
+    category: s.category.toUpperCase(),
+    tags: s.tags,
+    level: s.level ?? null,
+    address_en: s.addressEn,
+    address_zh: s.addressZh,
+    lat: s.lat,
+    lng: s.lng,
+    cover_image_url: s.coverImage,
+    gallery_urls: s.gallery,
+    summary_en: s.summaryEn,
+    summary_zh: s.summaryZh,
+    description_en: s.descriptionEn,
+    description_zh: s.descriptionZh,
+    opening_hours: s.openingHours ?? null,
+    ticket_info: s.ticketInfo ?? null,
+    visit_duration: s.visitDuration ?? null,
+    view_count: s.viewCount,
+    post_count: s.postCount,
+    rating: s.rating ?? null,
+    featured: s.featured,
+    hidden_gem: s.hiddenGem,
+  };
+}

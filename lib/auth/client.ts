@@ -92,7 +92,9 @@ export function createAuthClient(config: AuthClientConfig): AuthClient {
 
     let response: Response;
     try {
-      response = await doFetch(url(path), { ...init, headers });
+      // cache: "no-store"——绕过 Next fetch Data Cache。所有页面均为 force-dynamic
+      // 实时渲染，若 GET 响应被按 URL 缓存，会在数据导入前后命中过期快照（如空列表）。
+      response = await doFetch(url(path), { ...init, headers, cache: "no-store" });
     } catch {
       // 请求根本没到达后端——不能当作「邮箱或密码错误」呈现给用户
       throw new NetworkError();
