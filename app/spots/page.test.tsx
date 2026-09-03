@@ -20,7 +20,7 @@ describe("SpotsPage", () => {
   it("filters by category=history", async () => {
     render(await SpotsPage({ searchParams: { category: "history" } }));
     expect(screen.getByText("Terracotta Army")).toBeInTheDocument();
-    expect(screen.getByText("Mogao Caves")).toBeInTheDocument();
+    expect(screen.getByText("Forbidden City")).toBeInTheDocument();
     expect(screen.queryByText("West Lake")).not.toBeInTheDocument();
   });
 

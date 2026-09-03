@@ -30,7 +30,8 @@ describe("lib/places/client", () => {
 
   it("fetchSpots 为每个 Spot 反范式填充 cityName", async () => {
     const res = await fetchSpots();
-    expect(res.items[0].cityName).toBe("Hangzhou");
+    const hangzhou = res.items.find((s) => s.slug === "hangzhou-west-lake");
+    expect(hangzhou?.cityName).toBe("Hangzhou");
   });
 
   it("fetchCityBySlug 命中返回城市，未知 slug 返回 null", async () => {

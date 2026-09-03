@@ -10,3 +10,17 @@ import { server } from "./test/mocks/server";
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+// jsdom 不实现 IntersectionObserver。提供空桩，避免渲染无限滚动组件
+// （SpotInfiniteList / PostList）时因 `IntersectionObserver is not defined` 崩溃。
+// 需要触发「哨兵触底续拉」行为的测试会在各自文件内用 vi.stubGlobal 覆盖为自动 fire 的桩。
+class NoopIntersectionObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
+}
+globalThis.IntersectionObserver =
+  NoopIntersectionObserver as unknown as typeof IntersectionObserver;

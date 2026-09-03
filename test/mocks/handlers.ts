@@ -121,15 +121,45 @@ export const handlers = [
     return HttpResponse.json(cityToRaw(city));
   }),
 
-  http.get("*/api/spots", () => {
-    const items = SPOTS_MOCK.map(spotToRaw);
+  http.get("*/api/spots", ({ request }) => {
+    const url = new URL(request.url);
+    const city = url.searchParams.get("city");
+    const category = url.searchParams.get("category");
+    const tag = url.searchParams.get("tag");
+    const q = url.searchParams.get("q");
+    const sort = url.searchParams.get("sort") ?? "popular";
+    const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+    const size = Math.max(1, Number(url.searchParams.get("size") ?? "1000"));
+
+    let items = [...SPOTS_MOCK];
+    if (city) items = items.filter((s) => s.citySlug === city);
+    if (category) items = items.filter((s) => s.category === category);
+    if (tag) items = items.filter((s) => s.tags.includes(tag));
+    if (q) {
+      const needle = q.trim().toLowerCase();
+      items = items.filter((s) =>
+        [s.nameEn, s.nameZh, s.summaryEn, s.summaryZh, ...s.tags]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle)
+      );
+    }
+    items.sort((a, b) =>
+      sort === "hidden"
+        ? Number(b.hiddenGem) - Number(a.hiddenGem) || b.viewCount - a.viewCount
+        : b.viewCount - a.viewCount
+    );
+
+    const total = items.length;
+    const start = (page - 1) * size;
+    const pageItems = items.slice(start, start + size);
     return HttpResponse.json({
       request_id: "mock-request-id",
-      items,
-      page: 1,
-      size: items.length,
-      total: items.length,
-      has_more: false,
+      items: pageItems.map(spotToRaw),
+      page,
+      size,
+      total,
+      has_more: start + size < total,
     });
   }),
 

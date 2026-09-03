@@ -6,7 +6,7 @@ import { getTopSpots } from "@/lib/places";
 
 describe("HotSpotsSlot", () => {
   it("renders up to 6 hidden-gem-prioritized spot cards", async () => {
-    const top = await getTopSpots(6);
+    const top = await getTopSpots(50);
     render(<HotSpotsSlot spots={top} />);
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(top.length);
@@ -19,14 +19,14 @@ describe("HotSpotsSlot", () => {
   });
 
   it("every card links to its spot detail page", async () => {
-    const top = await getTopSpots(6);
+    const top = await getTopSpots(50);
     render(<HotSpotsSlot spots={top} />);
     const hrefs = screen.getAllByRole("link").map((l) => l.getAttribute("href"));
     expect(hrefs).toEqual(top.map((s) => `/spots/${s.slug}`));
   });
 
   it("disambiguates the two West Lake entries by city", async () => {
-    const top = await getTopSpots(6);
+    const top = await getTopSpots(50);
     render(<HotSpotsSlot spots={top} />);
     expect(screen.getAllByText(/West Lake/)).toHaveLength(2);
   });

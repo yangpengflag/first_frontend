@@ -2,10 +2,8 @@ import { filterSpots, listCityOptions, listSpotTags } from "@/lib/places";
 
 // 数据来自真实后端 api-spots，按请求动态渲染。
 export const dynamic = "force-dynamic";
-import { SpotCard } from "@/components/places/SpotCard";
 import { SpotFilters } from "@/components/places/SpotFilters";
-import { Pagination } from "@/components/places/Pagination";
-import { EmptyState } from "@/components/places/EmptyState";
+import { SpotInfiniteList } from "@/components/places/SpotInfiniteList";
 
 export const metadata = { title: "景点探索 · WanderChina" };
 
@@ -25,8 +23,8 @@ export default async function SpotsPage({ searchParams }: { searchParams: Search
   const page = Math.max(1, Number(get("page")) || 1);
 
   const result = await filterSpots({ city, category, tag, q, sort, page, size: SIZE });
-  const cities = listCityOptions();
-  const tags = listSpotTags();
+  const cities = await listCityOptions();
+  const tags = await listSpotTags();
   const initialQuery: Record<string, string | undefined> = {
     city,
     category,
@@ -34,6 +32,8 @@ export default async function SpotsPage({ searchParams }: { searchParams: Search
     q,
     sort: sort === "popular" ? undefined : sort,
   };
+
+  const queryKey = [city, category, tag, q, sort].filter(Boolean).join("|") || "all";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -49,25 +49,12 @@ export default async function SpotsPage({ searchParams }: { searchParams: Search
 
         <SpotFilters cities={cities} tags={tags} initialQuery={initialQuery} />
 
-        {result.items.length === 0 ? (
-          <EmptyState
-            title="没有符合条件的景点"
-            description="试着放宽筛选条件或更换关键词"
-            href="/spots"
-          />
-        ) : (
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {result.items.map((s) => (
-              <SpotCard key={s.slug} spot={s} />
-            ))}
-          </div>
-        )}
-
-        <Pagination
-          basePath="/spots"
-          baseQuery={initialQuery}
-          page={result.page}
-          totalPages={result.totalPages}
+        <SpotInfiniteList
+          key={queryKey}
+          initialItems={result.items}
+          initialHasMore={result.total > result.page * SIZE}
+          initialPage={result.page}
+          initialQuery={{ city, category, tag, q, sort: sort === "popular" ? undefined : sort }}
         />
       </div>
     </div>

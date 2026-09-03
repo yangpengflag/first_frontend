@@ -3,6 +3,7 @@ import { Eye, ImageIcon, MapPin, Star } from "lucide-react";
 
 import type { Spot } from "@/lib/places/types";
 import { SPOT_CATEGORY_LABELS } from "@/lib/places/labels";
+import { Badge } from "@/components/ui/badge";
 
 export function SpotCard({ spot }: { spot: Spot }) {
   const href = `/spots/${spot.slug}`;
@@ -41,16 +42,29 @@ export function SpotCard({ spot }: { spot: Spot }) {
             <h3 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-blue-700">
               {spot.nameEn}
             </h3>
-            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+            <Badge variant="secondary" className="shrink-0">
               {category.en}
-            </span>
+            </Badge>
           </div>
           <p className="mt-0.5 text-sm text-slate-500">
             {spot.nameZh} <span aria-hidden="true">·</span> {cityName}
           </p>
 
-          {spot.summaryEn && (
-            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{spot.summaryEn}</p>
+          {spot.summaryZh && (
+            <p className="mt-2 line-clamp-2 text-sm text-slate-600">{spot.summaryZh}</p>
+          )}
+
+          {spot.tags.length > 0 && (
+            <div data-testid="spot-tags" className="mt-3 flex flex-wrap gap-1.5">
+              {spot.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+              {spot.tags.length > 3 && (
+                <Badge variant="secondary">+{spot.tags.length - 3}</Badge>
+              )}
+            </div>
           )}
 
           <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">
@@ -58,10 +72,12 @@ export function SpotCard({ spot }: { spot: Spot }) {
               <MapPin className="h-4 w-4" aria-hidden="true" />
               {cityName}
             </span>
-            <span className="flex items-center gap-1">
-              <Eye className="h-4 w-4" aria-hidden="true" />
-              {spot.viewCount.toLocaleString()}
-            </span>
+            {spot.viewCount > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="h-4 w-4" aria-hidden="true" />
+                {spot.viewCount.toLocaleString()}
+              </span>
+            )}
             {spot.rating != null && (
               <span className="flex items-center gap-1">
                 <Star className="h-4 w-4" aria-hidden="true" />

@@ -28,7 +28,7 @@ describe("CityDetail", () => {
   it("renders subordinate spots grid", () => {
     render(<CityDetail city={city} spots={spots} related={related} />);
     expect(screen.getByText(/Spots in Chengdu/i)).toBeInTheDocument();
-    expect(screen.getByText("Kuanzhai Alley")).toBeInTheDocument();
+    expect(screen.getByText("Wuhou Shrine")).toBeInTheDocument();
     expect(screen.getByText("Chengdu Panda Base")).toBeInTheDocument();
   });
 

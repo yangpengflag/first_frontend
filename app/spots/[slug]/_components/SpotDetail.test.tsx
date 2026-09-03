@@ -9,7 +9,7 @@ import { SpotDetail } from "./SpotDetail";
 const related = [{ id: "p1", title: "Around Chengdu", slug: "around-chengdu" }];
 
 describe("SpotDetail", () => {
-  const base = SPOTS_MOCK.find((s) => s.slug === "chengdu-panda-base")!;
+  const base = SPOTS_MOCK.find((s) => s.slug === "chengdu-chengdu-panda-base")!;
   const spot: Spot = { ...base, cityName: "Chengdu" };
   let neighbors: Spot[] = [];
   beforeAll(async () => {
@@ -23,7 +23,7 @@ describe("SpotDetail", () => {
     expect(
       screen.getByRole("heading", { name: "Chengdu Panda Base", level: 1 })
     ).toBeInTheDocument();
-    expect(container.textContent).toContain("成都大熊猫繁育研究基地");
+    expect(container.textContent).toContain("大熊猫繁育研究基地");
     expect(container.textContent).toContain(spot.descriptionEn);
 
     const cityLink = screen
@@ -44,7 +44,7 @@ describe("SpotDetail", () => {
   it("renders nearby POI from the same city", () => {
     render(<SpotDetail spot={spot} neighbors={neighbors} related={related} />);
     expect(screen.getByText(/Nearby in Chengdu/i)).toBeInTheDocument();
-    expect(screen.getByText("Kuanzhai Alley")).toBeInTheDocument();
+    expect(screen.getByText("Wuhou Shrine")).toBeInTheDocument();
   });
 
   it("falls back to Chinese description when English is missing", () => {

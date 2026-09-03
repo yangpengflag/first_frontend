@@ -115,35 +115,9 @@ export async function filterCities(query: CityQuery = {}): Promise<PageResult<Ci
 }
 
 export async function filterSpots(query: SpotQuery = {}): Promise<PageResult<Spot>> {
-  const { items } = await fetchSpots({ size: ALL });
-  let result = [...items];
-  if (query.city) {
-    result = result.filter((s) => s.citySlug === query.city);
-  }
-  if (query.category) {
-    result = result.filter((s) => s.category === query.category);
-  }
-  if (query.tag) {
-    result = result.filter((s) => s.tags.includes(query.tag as string));
-  }
-  if (query.q) {
-    const q = query.q.trim().toLowerCase();
-    result = result.filter((s) =>
-      [s.nameEn, s.nameZh, s.summaryEn, s.summaryZh, ...s.tags]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }
-  if (query.sort === "hidden") {
-    result.sort(
-      (a, b) =>
-        Number(b.hiddenGem) - Number(a.hiddenGem) || b.viewCount - a.viewCount
-    );
-  } else {
-    result.sort((a, b) => b.viewCount - a.viewCount);
-  }
-  return paginate(result, query.page, query.size);
+  // 真分页（P4 api-spots）：city/category/tag/q/sort/page/size 全下推后端，
+  // 由 client.fetchSpots 完成 snake_case 适配与分页信封映射；本地不再二次过滤/排序/切片。
+  return fetchSpots(query);
 }
 
 /** 同城市内的其他 POI（详情页"周边 POI"占位）。 */
@@ -160,16 +134,20 @@ export async function getSpotNeighbors(slug: string): Promise<Spot[]> {
 // 选项列表（驱动筛选条下拉）—— 暂取自 mock，P6 后切换真实聚合
 // ---------------------------------------------------------------------------
 
-export function listCityOptions(): { slug: string; name: string; nameZh: string }[] {
-  return CITIES_MOCK.map((c) => ({ slug: c.slug, name: c.name, nameZh: c.nameZh })).sort(
-    (a, b) => a.name.localeCompare(b.name)
-  );
+// 选项列表（驱动筛选条下拉）改为聚合真实后端 /api/cities、/api/spots，
+// 与运行时形状一致（设计 D6）。msw 在测试环境返回对齐后的 MOCK 数据。
+export async function listCityOptions(): Promise<{ slug: string; name: string; nameZh: string }[]> {
+  const { items } = await fetchCities({ size: ALL });
+  return items
+    .map((c) => ({ slug: c.slug, name: c.name, nameZh: c.nameZh }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function listCategories(): SpotCategory[] {
   return SPOT_CATEGORIES;
 }
 
-export function listSpotTags(): string[] {
-  return Array.from(new Set(SPOTS_MOCK.flatMap((s) => s.tags))).sort();
+export async function listSpotTags(): Promise<string[]> {
+  const { items } = await fetchSpots({ size: ALL });
+  return Array.from(new Set(items.flatMap((s) => s.tags))).sort();
 }
