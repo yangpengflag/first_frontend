@@ -1,97 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Bookmark, BookmarkCheck, Loader2, X } from "lucide-react";
 
-import { bookmarksApi } from "@/lib/bookmarks/api";
-import { describeBookmarkError } from "@/lib/bookmarks/messages";
-import { useAuthSession } from "@/lib/auth/session";
-import { useOptimisticAction } from "@/lib/engagement/useOptimisticAction";
+import { useBookmark } from "@/lib/engagement/useBookmark";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-type State =
-  | { kind: "loading" }
-  | { kind: "ready"; bookmarked: boolean }
-  | { kind: "error"; message: string };
-
 /**
- * 帖子收藏按钮（乐观更新）。
+ * 通用收藏按钮（乐观更新），帖子与景点复用同一展示层。
  *
- * <p>挂载时通过 {@code GET /api/posts/{id}/bookmark} 精确获取初始态；点击先乐观翻转图标态，
- * 再异步 toggle，仅采纳最新响应，失败回滚 + 瞬时提示。未登录点击跳转登录。
+ * <p>数据获取 / 切换 / 初始态 / 回跳路径统一委托给 {@link useBookmark}（按
+ * `postId` 或 `targetType`+`targetId` 注入对应收藏 API）。未登录以中性态呈现，
+ * 点击跳转登录；切换先乐观翻转图标态再异步请求，失败回滚 + 瞬时提示。
  */
-export function BookmarkButton({ postId }: { postId: string }) {
-  const { status } = useAuthSession();
-  const router = useRouter();
-  const [state, setState] = useState<State>({ kind: "loading" });
-  const [pending, setPending] = useState(false);
-  const { run, alert, dismissAlert } = useOptimisticAction();
+export function BookmarkButton(props: { postId: string } | { targetType: "post" | "spot"; targetId: string }) {
+  const target = "postId" in props
+    ? { type: "post" as const, id: props.postId }
+    : { type: props.targetType, id: props.targetId };
 
-  const load = useCallback(() => {
-    setState({ kind: "loading" });
-    bookmarksApi
-      .status(postId)
-      .then((res) => setState({ kind: "ready", bookmarked: res.bookmarked ?? false }))
-      .catch((error: unknown) =>
-        setState({ kind: "error", message: describeBookmarkError(error) }),
-      );
-  }, [postId]);
+  const { bookmarked, error, pending, toggle, alert, dismissAlert, reload } = useBookmark(target);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      load();
-    } else if (status === "unauthenticated") {
-      setState({ kind: "ready", bookmarked: false });
-    }
-  }, [status, load]);
-
-  const requireAuth = useCallback((): boolean => {
-    if (status !== "authenticated") {
-      router.push(`/login?redirect=/posts/${encodeURIComponent(postId)}`);
-      return false;
-    }
-    return true;
-  }, [status, router, postId]);
-
-  const toggle = useCallback(() => {
-    if (!requireAuth()) return;
-    if (state.kind !== "ready") return;
-    const snapshot = state;
-    setPending(true);
-    run(
-      () => bookmarksApi.toggle(postId),
-      {
-        optimistic: () =>
-          setState((s) => (s.kind === "ready" ? { kind: "ready", bookmarked: !s.bookmarked } : s)),
-        rollback: () => setState(snapshot),
-        onOk: (res) => {
-          setPending(false);
-          // 仅当后端明确回传 bookmarked 时才覆盖，否则保留乐观态（避免漏返字段导致误显示未收藏）。
-          if (res.bookmarked === undefined) return;
-          const bookmarked = res.bookmarked;
-          setState((s) => (s.kind === "ready" ? { kind: "ready", bookmarked } : s));
-        },
-        onError: (err) => {
-          setPending(false);
-          return describeBookmarkError(err);
-        },
-      },
-    );
-  }, [postId, requireAuth, state, run]);
-
-  if (state.kind === "loading") {
-    return <Skeleton className="h-9 w-28 rounded-md" aria-busy="true" />;
-  }
-
-  if (state.kind === "error") {
+  if (error) {
     return (
       <Alert variant="destructive" className="max-w-xl">
         <AlertDescription className="flex items-center justify-between gap-4">
-          <span>{state.message}</span>
-          <Button variant="outline" size="sm" onClick={load}>
+          <span>{error}</span>
+          <Button variant="outline" size="sm" onClick={reload}>
             重试
           </Button>
         </AlertDescription>
@@ -99,7 +34,11 @@ export function BookmarkButton({ postId }: { postId: string }) {
     );
   }
 
-  const active = state.bookmarked;
+  if (bookmarked === null) {
+    return <Skeleton className="h-9 w-28 rounded-md" aria-busy="true" />;
+  }
+
+  const active = bookmarked;
   return (
     <div className="flex flex-col gap-2">
       {alert && (

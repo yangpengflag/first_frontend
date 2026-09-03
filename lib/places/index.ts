@@ -10,7 +10,6 @@
  * SpotDetail 无需再查城市。选项列表与"相关攻略"占位仍取自 mock，待 P6
  * post-location-tagging 接入真实聚合后替换。
  */
-import { CITIES_MOCK, SPOTS_MOCK } from "./mocks";
 import type { City, Spot, RelatedPost, SpotCategory, PageResult } from "./types";
 import { SPOT_CATEGORIES } from "./labels";
 import { fetchCities, fetchSpots, fetchCityBySlug, fetchSpotBySlug, fetchRelatedPosts } from "./client";

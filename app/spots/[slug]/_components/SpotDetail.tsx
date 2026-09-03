@@ -13,6 +13,9 @@ import {
 import type { Spot, RelatedPost } from "@/lib/places/types";
 import { SPOT_CATEGORY_LABELS } from "@/lib/places/labels";
 import { SpotCard } from "@/components/places/SpotCard";
+import { SpotGallery } from "@/components/places/SpotGallery";
+import { SpotCommentSection } from "@/components/places/SpotCommentSection";
+import { BookmarkButton } from "@/app/posts/_components/BookmarkButton";
 import { RelatedPosts } from "@/components/places/RelatedPosts";
 
 export function SpotDetail({
@@ -70,9 +73,20 @@ export function SpotDetail({
           {spot.nameZh} <span aria-hidden="true">·</span> {cityName}
         </p>
 
-        <div
-          className="mt-6 aspect-[16/9] w-full rounded-xl border border-slate-200 bg-slate-100 bg-cover bg-center"
-          style={spot.coverImage ? { backgroundImage: `url(${spot.coverImage})` } : undefined}
+        <div className="mt-4">
+          <BookmarkButton targetType="spot" targetId={spot.slug} />
+        </div>
+
+        <SpotGallery
+          images={
+            spot.gallery && spot.gallery.length > 0
+              ? spot.gallery
+              : spot.coverImage
+                ? [spot.coverImage]
+                : []
+          }
+          nameEn={spot.nameEn}
+          nameZh={spot.nameZh}
         />
 
         <section className="mt-8 space-y-4">
@@ -147,6 +161,13 @@ export function SpotDetail({
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-xl font-bold text-slate-900">评论 / Comments</h2>
+          <div className="mt-4">
+            <SpotCommentSection slug={spot.slug} />
+          </div>
         </section>
 
         <RelatedPosts related={related} />

@@ -1490,7 +1490,7 @@
           "评论"
         ],
         "summary": "删除评论（软删除）",
-        "description": "需鉴权且须为作者本人；顶层评论级联软删其回复。",
+        "description": "需鉴权；作者本人或 ADMIN 可删；顶层评论级联软删其回复。",
         "operationId": "delete_1",
         "parameters": [
           {
@@ -2334,6 +2334,10 @@
           },
           "status": {
             "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["USER", "ADMIN"]
           },
           "created_at": {
             "type": "string",

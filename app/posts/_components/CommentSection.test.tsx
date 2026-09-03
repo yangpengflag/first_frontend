@@ -24,9 +24,27 @@ vi.mock("@/lib/auth/tokens", () => ({
 vi.mock("@/lib/auth/api", () => ({
   authApi: { me: vi.fn(), logout: vi.fn() },
 }));
-vi.mock("@/lib/comments/api", () => ({
-  commentsApi: { list: vi.fn(), replies: vi.fn(), create: vi.fn(), remove: vi.fn() },
-}));
+vi.mock("@/lib/comments/api", () => {
+  // CommentSection 现通过注入式 makePostCommentApi 访问评论端点；
+  // 该适配层直接复用下方 commentsApi 的各方法，故 mock 须两者都导出。
+  const commentsApi = {
+    list: vi.fn(),
+    replies: vi.fn(),
+    create: vi.fn(),
+    remove: vi.fn(),
+  };
+  return {
+    commentsApi,
+    // 与真实 makePostCommentApi 一致：闭包捕获 postId，并将 create 包装为 (content, parentId)
+    makePostCommentApi: vi.fn((postId: string) => ({
+      list: (page?: number, size?: number) => commentsApi.list(postId, page, size),
+      replies: (id: string, page?: number, size?: number) => commentsApi.replies(id, page, size),
+      create: (content: string, parentId?: string) =>
+        commentsApi.create(postId, { content, parent_comment_id: parentId }),
+      remove: (id: string) => commentsApi.remove(id),
+    })),
+  };
+});
 
 const MOCK_USER = {
   id: "u1",

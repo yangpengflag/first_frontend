@@ -848,6 +848,8 @@ export interface components {
             display_name?: string;
             avatar_url?: string;
             status?: string;
+            /** @enum {string} */
+            role?: "USER" | "ADMIN";
             /** Format: date-time */
             created_at?: string;
         };

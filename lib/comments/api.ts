@@ -52,3 +52,21 @@ export const commentsApi = {
     });
   },
 };
+
+import type { CommentThreadApi, CommentThreadItem, PageCommentThread } from "./types";
+
+/**
+ * 将帖子评论 API 适配为 {@link CommentThreadApi}（注入式抽象）。
+ * 闭包捕获 postId，使上层 {@link CommentThread} / {@link CommentItem} 无需感知目标类型。
+ */
+export function makePostCommentApi(postId: string): CommentThreadApi {
+  return {
+    list: (page, size) =>
+      commentsApi.list(postId, page, size) as Promise<PageCommentThread>,
+    replies: (id, page, size) =>
+      commentsApi.replies(id, page, size) as Promise<PageCommentThread>,
+    create: (content, parentId) =>
+      commentsApi.create(postId, { content, parent_comment_id: parentId ?? undefined }) as Promise<CommentThreadItem>,
+    remove: (id) => commentsApi.remove(id),
+  };
+}
