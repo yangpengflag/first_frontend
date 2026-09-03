@@ -80,6 +80,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spots/{slug}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 景点顶层评论列表
+         * @description 需鉴权；按创建时间倒序分页，含 reply_count 与作者信息。
+         */
+        get: operations["list_1"];
+        put?: never;
+        /**
+         * 发布景点评论
+         * @description 需鉴权。顶层评论 parent_comment_id 留空；回复须为本景点某顶层评论 id。
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/spots/{slug}/bookmark": {
         parameters: {
             query?: never;
@@ -115,13 +139,13 @@ export interface paths {
          * 公开列表
          * @description 仅返回 PUBLISHED；支持 sort=latest（cursor 翻页）/ top / most_commented（offset 翻页），每项含作者展示信息与互动统计。
          */
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         /**
          * 创建帖子
          * @description authorId 取自令牌主体；status 缺省 DRAFT，可直传 PUBLISHED 发布。
          */
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -159,13 +183,13 @@ export interface paths {
          * 顶层评论列表
          * @description 需鉴权；按创建时间倒序分页，含 reply_count 与作者信息。
          */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         /**
          * 发布评论
          * @description 需鉴权。顶层评论 parent_comment_id 留空；回复须为本帖某顶层评论 id。
          */
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -350,9 +374,29 @@ export interface paths {
         };
         /**
          * 景点排行榜
-         * @description 公开免鉴权；type=rating|popular|bookmarks（默认 popular），limit 默认 10 上限 50。返回 SpotSummary 数组（Top N）。
+         * @description 公开免鉴权；type=rating|popular|bookmarks（默认 popular），limit 默认 10 上限 50。返回 SpotSummary 数组（Top N）。数据经缓存提供、最多滞后 5 分钟；景点写操作与收藏切换即时失效（下个请求即最新）。
          */
         get: operations["ranking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/spot-comments/{commentId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 景点评论回复列表
+         * @description 需鉴权；按创建时间升序分页。
+         */
+        get: operations["replies"];
         put?: never;
         post?: never;
         delete?: never;
@@ -372,7 +416,7 @@ export interface paths {
          * 我的景点收藏列表
          * @description 需鉴权；按收藏时间倒序分页，返回景点列表项（仅 PUBLISHED）。
          */
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -452,7 +496,7 @@ export interface paths {
          * 回复列表
          * @description 需鉴权；按创建时间升序分页。
          */
-        get: operations["replies"];
+        get: operations["replies_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -472,7 +516,7 @@ export interface paths {
          * 城市列表
          * @description 按 name 升序分页返回全部存活城市（page/size 分页）。
          */
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -512,7 +556,7 @@ export interface paths {
          * 我的收藏列表
          * @description 需鉴权；全量返回（失效帖子以 available=false 占位），按收藏时间倒序。
          */
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -568,6 +612,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/spot-comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * 删除景点评论（软删除）
+         * @description 需鉴权；作者本人或 ADMIN 可删；顶层评论级联软删其回复。
+         */
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/comments/{commentId}": {
         parameters: {
             query?: never;
@@ -580,9 +644,9 @@ export interface paths {
         post?: never;
         /**
          * 删除评论（软删除）
-         * @description 需鉴权且须为作者本人；顶层评论级联软删其回复。
+         * @description 需鉴权；作者本人或 ADMIN 可删；顶层评论级联软删其回复。
          */
-        delete: operations["delete_1"];
+        delete: operations["delete_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -681,7 +745,6 @@ export interface components {
             nearby_spots?: components["schemas"]["SpotSummary"][];
         };
         SpotSummary: {
-            request_id?: string;
             slug?: string;
             name_zh?: string;
             name_en?: string;
@@ -711,6 +774,7 @@ export interface components {
             rating?: number;
             featured?: boolean;
             hidden_gem?: boolean;
+            request_id?: string;
         };
         UpdatePostRequest: {
             title?: string;
@@ -772,6 +836,30 @@ export interface components {
             featured?: boolean;
             hiddenGem?: boolean;
         };
+        CreateCommentRequest: {
+            content: string;
+            /** Format: uuid */
+            parent_comment_id?: string;
+        };
+        SpotCommentResponse: {
+            request_id?: string;
+            /** Format: uuid */
+            id?: string;
+            spot_slug?: string;
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            parent_comment_id?: string;
+            content?: string;
+            author_name?: string;
+            author_avatar_url?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+            /** Format: int64 */
+            reply_count?: number;
+        };
         SpotBookmarkStatusResponse: {
             request_id?: string;
             spot_slug?: string;
@@ -796,11 +884,6 @@ export interface components {
             /** Format: uuid */
             post_id?: string;
             user_vote?: string;
-        };
-        CreateCommentRequest: {
-            content: string;
-            /** Format: uuid */
-            parent_comment_id?: string;
         };
         CommentResponse: {
             request_id?: string;
@@ -848,8 +931,7 @@ export interface components {
             display_name?: string;
             avatar_url?: string;
             status?: string;
-            /** @enum {string} */
-            role?: "USER" | "ADMIN";
+            role?: string;
             /** Format: date-time */
             created_at?: string;
         };
@@ -880,13 +962,45 @@ export interface components {
             total?: number;
             has_more?: boolean;
         };
+        PageSpotCommentResponse: {
+            /** Format: int64 */
+            totalElements?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            /** Format: int32 */
+            size?: number;
+            content?: components["schemas"]["SpotCommentResponse"][];
+            /** Format: int32 */
+            number?: number;
+            sort?: components["schemas"]["SortObject"];
+            /** Format: int32 */
+            numberOfElements?: number;
+            pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
+            empty?: boolean;
+        };
+        PageableObject: {
+            /** Format: int64 */
+            offset?: number;
+            sort?: components["schemas"]["SortObject"];
+            paged?: boolean;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            pageNumber?: number;
+            unpaged?: boolean;
+        };
+        SortObject: {
+            empty?: boolean;
+            sorted?: boolean;
+            unsorted?: boolean;
+        };
         PageSpotSummary: {
             /** Format: int64 */
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["SpotSummary"][];
@@ -896,23 +1010,9 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             empty?: boolean;
-        };
-        PageableObject: {
-            /** Format: int64 */
-            offset?: number;
-            sort?: components["schemas"]["SortObject"];
-            paged?: boolean;
-            /** Format: int32 */
-            pageNumber?: number;
-            /** Format: int32 */
-            pageSize?: number;
-            unpaged?: boolean;
-        };
-        SortObject: {
-            empty?: boolean;
-            sorted?: boolean;
-            unsorted?: boolean;
         };
         PostListResponse: {
             request_id?: string;
@@ -941,8 +1041,6 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["CommentResponse"][];
@@ -952,6 +1050,8 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             empty?: boolean;
         };
         BookmarkStatusResponse: {
@@ -1006,8 +1106,6 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
-            first?: boolean;
-            last?: boolean;
             /** Format: int32 */
             size?: number;
             content?: components["schemas"]["BookmarkSummary"][];
@@ -1017,6 +1115,8 @@ export interface components {
             /** Format: int32 */
             numberOfElements?: number;
             pageable?: components["schemas"]["PageableObject"];
+            first?: boolean;
+            last?: boolean;
             empty?: boolean;
         };
     };
@@ -1196,6 +1296,57 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageSpotCommentResponse"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpotCommentResponse"];
+                };
+            };
+        };
+    };
     status: {
         parameters: {
             query?: never;
@@ -1240,7 +1391,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 sort?: string;
@@ -1267,7 +1418,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1317,7 +1468,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 page?: number;
@@ -1342,7 +1493,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1721,7 +1872,32 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    replies: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageSpotCommentResponse"];
+                };
+            };
+        };
+    };
+    list_4: {
         parameters: {
             query?: {
                 page?: number;
@@ -1813,7 +1989,7 @@ export interface operations {
             };
         };
     };
-    replies: {
+    replies_1: {
         parameters: {
             query?: {
                 page?: number;
@@ -1838,7 +2014,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: {
                 page?: number;
@@ -1883,7 +2059,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 page?: number;
@@ -2008,6 +2184,26 @@ export interface operations {
         };
     };
     delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;

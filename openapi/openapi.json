@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8081",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -30,6 +30,10 @@
     {
       "name": "收藏",
       "description": "帖子收藏的切换与列表。所有错误响应使用统一信封。"
+    },
+    {
+      "name": "景点评论",
+      "description": "景点评论与回复的发布 / 列表 / 删除。所有错误响应使用统一信封。"
     },
     {
       "name": "认证",
@@ -334,6 +338,98 @@
         }
       }
     },
+    "/api/spots/{slug}/comments": {
+      "get": {
+        "tags": [
+          "景点评论"
+        ],
+        "summary": "景点顶层评论列表",
+        "description": "需鉴权；按创建时间倒序分页，含 reply_count 与作者信息。",
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageSpotCommentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "景点评论"
+        ],
+        "summary": "发布景点评论",
+        "description": "需鉴权。顶层评论 parent_comment_id 留空；回复须为本景点某顶层评论 id。",
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotCommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/spots/{slug}/bookmark": {
       "get": {
         "tags": [
@@ -403,7 +499,7 @@
         ],
         "summary": "公开列表",
         "description": "仅返回 PUBLISHED；支持 sort=latest（cursor 翻页）/ top / most_commented（offset 翻页），每项含作者展示信息与互动统计。",
-        "operationId": "list_1",
+        "operationId": "list_2",
         "parameters": [
           {
             "name": "sort",
@@ -477,7 +573,7 @@
         ],
         "summary": "创建帖子",
         "description": "authorId 取自令牌主体；status 缺省 DRAFT，可直传 PUBLISHED 发布。",
-        "operationId": "create_1",
+        "operationId": "create_2",
         "requestBody": {
           "content": {
             "application/json": {
@@ -552,7 +648,7 @@
         ],
         "summary": "顶层评论列表",
         "description": "需鉴权；按创建时间倒序分页，含 reply_count 与作者信息。",
-        "operationId": "list_2",
+        "operationId": "list_3",
         "parameters": [
           {
             "name": "postId",
@@ -603,7 +699,7 @@
         ],
         "summary": "发布评论",
         "description": "需鉴权。顶层评论 parent_comment_id 留空；回复须为本帖某顶层评论 id。",
-        "operationId": "create_2",
+        "operationId": "create_3",
         "parameters": [
           {
             "name": "postId",
@@ -1006,7 +1102,7 @@
           "景点 POI"
         ],
         "summary": "景点排行榜",
-        "description": "公开免鉴权；type=rating|popular|bookmarks（默认 popular），limit 默认 10 上限 50。返回 SpotSummary 数组（Top N）。",
+        "description": "公开免鉴权；type=rating|popular|bookmarks（默认 popular），limit 默认 10 上限 50。返回 SpotSummary 数组（Top N）。数据经缓存提供、最多滞后 5 分钟；景点写操作与收藏切换即时失效（下个请求即最新）。",
         "operationId": "ranking",
         "parameters": [
           {
@@ -1046,6 +1142,59 @@
         }
       }
     },
+    "/api/spot-comments/{commentId}/replies": {
+      "get": {
+        "tags": [
+          "景点评论"
+        ],
+        "summary": "景点评论回复列表",
+        "description": "需鉴权；按创建时间升序分页。",
+        "operationId": "replies",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageSpotCommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/spot-bookmarks": {
       "get": {
         "tags": [
@@ -1053,7 +1202,7 @@
         ],
         "summary": "我的景点收藏列表",
         "description": "需鉴权；按收藏时间倒序分页，返回景点列表项（仅 PUBLISHED）。",
-        "operationId": "list_3",
+        "operationId": "list_4",
         "parameters": [
           {
             "name": "page",
@@ -1215,7 +1364,7 @@
         ],
         "summary": "回复列表",
         "description": "需鉴权；按创建时间升序分页。",
-        "operationId": "replies",
+        "operationId": "replies_1",
         "parameters": [
           {
             "name": "commentId",
@@ -1268,7 +1417,7 @@
         ],
         "summary": "城市列表",
         "description": "按 name 升序分页返回全部存活城市（page/size 分页）。",
-        "operationId": "list_4",
+        "operationId": "list_5",
         "parameters": [
           {
             "name": "page",
@@ -1344,7 +1493,7 @@
         ],
         "summary": "我的收藏列表",
         "description": "需鉴权；全量返回（失效帖子以 available=false 占位），按收藏时间倒序。",
-        "operationId": "list_5",
+        "operationId": "list_6",
         "parameters": [
           {
             "name": "page",
@@ -1484,6 +1633,32 @@
         }
       }
     },
+    "/api/spot-comments/{commentId}": {
+      "delete": {
+        "tags": [
+          "景点评论"
+        ],
+        "summary": "删除景点评论（软删除）",
+        "description": "需鉴权；作者本人或 ADMIN 可删；顶层评论级联软删其回复。",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/comments/{commentId}": {
       "delete": {
         "tags": [
@@ -1491,7 +1666,7 @@
         ],
         "summary": "删除评论（软删除）",
         "description": "需鉴权；作者本人或 ADMIN 可删；顶层评论级联软删其回复。",
-        "operationId": "delete_1",
+        "operationId": "delete_2",
         "parameters": [
           {
             "name": "commentId",
@@ -1784,9 +1959,6 @@
       "SpotSummary": {
         "type": "object",
         "properties": {
-          "request_id": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
@@ -1869,6 +2041,9 @@
           },
           "hidden_gem": {
             "type": "boolean"
+          },
+          "request_id": {
+            "type": "string"
           }
         }
       },
@@ -2086,6 +2261,67 @@
           "nameZh"
         ]
       },
+      "CreateCommentRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "parent_comment_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "SpotCommentResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "spot_slug": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parent_comment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "content": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "author_avatar_url": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reply_count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "SpotBookmarkStatusResponse": {
         "type": "object",
         "properties": {
@@ -2181,23 +2417,6 @@
             "type": "string"
           }
         }
-      },
-      "CreateCommentRequest": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 0
-          },
-          "parent_comment_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "content"
-        ]
       },
       "CommentResponse": {
         "type": "object",
@@ -2336,8 +2555,7 @@
             "type": "string"
           },
           "role": {
-            "type": "string",
-            "enum": ["USER", "ADMIN"]
+            "type": "string"
           },
           "created_at": {
             "type": "string",
@@ -2432,7 +2650,7 @@
           }
         }
       },
-      "PageSpotSummary": {
+      "PageSpotCommentResponse": {
         "type": "object",
         "properties": {
           "totalElements": {
@@ -2443,11 +2661,91 @@
             "type": "integer",
             "format": "int32"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpotCommentResponse"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "first": {
             "type": "boolean"
           },
           "last": {
             "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageSpotSummary": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           },
           "size": {
             "type": "integer",
@@ -2473,47 +2771,13 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unpaged": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "empty": {
-            "type": "boolean"
-          },
-          "sorted": {
-            "type": "boolean"
-          },
-          "unsorted": {
             "type": "boolean"
           }
         }
@@ -2584,12 +2848,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -2613,6 +2871,12 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
           },
           "empty": {
             "type": "boolean"
@@ -2761,12 +3025,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -2790,6 +3048,12 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
           },
           "empty": {
             "type": "boolean"
